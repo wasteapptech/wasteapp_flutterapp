@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:wasteapptest/Signin_Page/login.dart';
+import 'package:wasteapptest/Signup_page/signup.dart';
 
 class Responsive extends StatelessWidget {
   final Widget mobile;
@@ -143,8 +145,10 @@ class LoginAndSignupBtn extends StatelessWidget {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                print('Login Pressed');
-                // Add navigation to login screen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF0B894B),
@@ -168,9 +172,11 @@ class LoginAndSignupBtn extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {
-                print('Daftar Pressed');
-                // Add navigation to register screen
+            onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SignupScreen()),
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.grey[200],
