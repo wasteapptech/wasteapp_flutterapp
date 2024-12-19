@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:wasteapptest/Login_Page/login.dart';
+import 'package:wasteapptest/Welcome/welcome_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -18,7 +18,6 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    // Initialize the animation controllers and animations
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -31,7 +30,6 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
-    // Adjust scale animation to make the size transition smoother
     _scaleAnimation = Tween<double>(begin: 0.5, end: 0.8).animate(
       CurvedAnimation(
         parent: _animationController,
@@ -39,12 +37,10 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
-    // Start the animation
     _animationController.forward().then((_) {
-      // Navigate to the login screen after the animation is complete
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        MaterialPageRoute(builder: (context) => const WelcomeScreen()),
       );
     });
   }
@@ -52,7 +48,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.green,
+      backgroundColor: const Color(0xFF0B894B),
       body: Center(
         child: AnimatedBuilder(
           animation: _animationController,
