@@ -34,14 +34,14 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0B894B),
+      backgroundColor: const Color(0xFF34a853),
       body: SafeArea(
         child: Responsive(
           desktop: Row(
             children: [
               Expanded(
                 child: Container(
-                  color: const Color(0xFF0B894B),
+                  color: const Color(0xFF34a853),
                   child: const Center(
                     child: WelcomeImage(),
                   ),
@@ -83,7 +83,7 @@ class MobileWelcomeScreen extends StatelessWidget {
       children: [
         Container(
           height: MediaQuery.of(context).size.height * 0.55,
-          color: const Color(0xFF0B894B),
+          color: const Color(0xFF34a853),
           child: const Center(
             child: WelcomeImage(),
           ),
@@ -118,13 +118,13 @@ class WelcomeImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 200, 
-      height: 200,
+      width: 500, 
+      height: 500,
       child: Center(
         child: Image.asset(
-          'assets/images/logo1.png',
-          width: 150, 
-          height: 150,
+          'assets/images/logo.png',
+          width: 450, 
+          height: 450,
         ),
       ),
     );
@@ -137,7 +137,7 @@ class LoginAndSignupBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(maxWidth: 280), 
+      constraints: const BoxConstraints(maxWidth: 270), 
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -151,16 +151,16 @@ class LoginAndSignupBtn extends StatelessWidget {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0B894B),
+                backgroundColor: const Color(0xFF34a853),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: const Text(
-                'Masuk',
+                'Sign In',
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: 18,
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
                   fontFamily: 'Poppins'
@@ -186,10 +186,10 @@ class LoginAndSignupBtn extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: const Text(
-                'Daftar',
+                'Sign Up',
                 style: TextStyle(
-                  fontSize: 24,
-                  color: Color(0xFF0B894B),
+                  fontSize: 18,
+                  color: Color(0xFF34a853),
                   fontWeight: FontWeight.w700,
                   fontFamily: 'Poppins',
                 ),

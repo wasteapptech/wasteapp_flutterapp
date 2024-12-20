@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:wasteapptest/Welcome/welcome_screen.dart';
+import 'package:wasteapptest/Onboarding_Page/onboard.dart';
+
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -14,41 +15,57 @@ class _SplashScreenState extends State<SplashScreen>
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
 
-  @override
-  void initState() {
-    super.initState();
+@override
+void initState() {
+  super.initState();
 
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    );
+  _animationController = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 1),
+  );
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeIn,
-      ),
-    );
+  _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+    CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ),
+  );
 
-    _scaleAnimation = Tween<double>(begin: 0.5, end: 0.8).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeOut,
-      ),
-    );
+  _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
+    CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ),
+  );
 
-    _animationController.forward().then((_) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const WelcomeScreen()),
-      );
+  _animationController.forward().then((_) {
+    // Tambahkan jeda sebelum fade-out
+    Future.delayed(const Duration(seconds: 1), () {
+      _animationController.reverse().then((_) {
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            transitionDuration: const Duration(seconds: 1),
+            pageBuilder: (context, animation, secondaryAnimation) {
+              return FadeTransition(
+                opacity: animation,
+                child: const OnboardingScreen(),
+              );
+            },
+          ),
+        );
+      });
     });
-  }
+  });
+}
+
+
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0B894B),
+      backgroundColor: const Color(0xFF34a853),
       body: Center(
         child: AnimatedBuilder(
           animation: _animationController,

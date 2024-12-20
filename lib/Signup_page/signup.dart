@@ -14,9 +14,59 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  bool _isLoading = false;
 
-  // Show success dialog with SVG
+  void _showNoInputDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text(
+          'Data Belum Diisi',
+          style: TextStyle(
+            fontSize: 20,
+            color: Colors.black,
+            fontWeight: FontWeight.w700,
+            fontFamily: 'Poppins',
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SvgPicture.asset(
+              'assets/svg/error-svgrepo-com.svg',
+              width: 50,
+              height: 50,
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Anda belum menginputkan data apa pun. Silakan isi data Anda terlebih dahulu.',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.black,
+                fontFamily: 'Poppins',
+              ),
+            ),
+          ],
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+            },
+            child: const Text(
+              'OK',
+              style: TextStyle(
+                fontSize: 15,
+                color: Color(0xFFFF9800),
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Poppins',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showSuccessDialog() {
     showDialog(
       context: context,
@@ -34,7 +84,7 @@ class _SignupScreenState extends State<SignupScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             SvgPicture.asset(
-              'assets/svg/success-svgrepo-com.svg', 
+              'assets/svg/success-svgrepo-com.svg',
               width: 50,
               height: 50,
             ),
@@ -52,13 +102,13 @@ class _SignupScreenState extends State<SignupScreen> {
         actions: <Widget>[
           TextButton(
             onPressed: () {
-              Navigator.of(ctx).pop(); 
+              Navigator.of(ctx).pop();
             },
             child: const Text(
               'Done',
               style: TextStyle(
                 fontSize: 15,
-                color: Color(0xFF0B894B),
+                color: Color(0xFF34a853),
                 fontWeight: FontWeight.w700,
                 fontFamily: 'Poppins',
               ),
@@ -69,7 +119,6 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-  // Show error dialog with SVG
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
@@ -87,7 +136,7 @@ class _SignupScreenState extends State<SignupScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             SvgPicture.asset(
-              'assets/svg/error-svgrepo-com.svg', 
+              'assets/svg/error-svgrepo-com.svg',
               width: 50,
               height: 50,
             ),
@@ -105,13 +154,13 @@ class _SignupScreenState extends State<SignupScreen> {
         actions: <Widget>[
           TextButton(
             onPressed: () {
-              Navigator.of(ctx).pop(); 
+              Navigator.of(ctx).pop();
             },
             child: const Text(
               'Done',
               style: TextStyle(
                 fontSize: 15,
-                color: Color(0xFF0B894B),
+                color: Color(0xFF34a853),
                 fontWeight: FontWeight.w700,
                 fontFamily: 'Poppins',
               ),
@@ -122,7 +171,6 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-  // Show user already registered dialog
   void _showUserAlreadyRegisteredDialog() {
     showDialog(
       context: context,
@@ -140,7 +188,7 @@ class _SignupScreenState extends State<SignupScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             SvgPicture.asset(
-              'assets/svg/error-svgrepo-com.svg', 
+              'assets/svg/error-svgrepo-com.svg',
               width: 50,
               height: 50,
             ),
@@ -158,13 +206,13 @@ class _SignupScreenState extends State<SignupScreen> {
         actions: <Widget>[
           TextButton(
             onPressed: () {
-              Navigator.of(ctx).pop(); // Close the dialog
+              Navigator.of(ctx).pop();
             },
             child: const Text(
               'OK',
               style: TextStyle(
                 fontSize: 15,
-                color: Color(0xFF0B894B),
+                color: Color(0xFF34a853),
                 fontWeight: FontWeight.w700,
                 fontFamily: 'Poppins',
               ),
@@ -176,18 +224,24 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Future<void> _signup() async {
-    final String apiUrl = 'https://api-wasteapp.vercel.app/api/auth/signup';
+    const String apiUrl = 'https://api-wasteapp.vercel.app/api/auth/signup';
     final Map<String, String> headers = {
       'Content-Type': 'application/json',
     };
     final Map<String, dynamic> body = {
-      'email': _emailController.text,
-      'name': _usernameController.text,
-      'password': _passwordController.text,
+      'email': _emailController.text.trim(),
+      'name': _usernameController.text.trim(),
+      'password': _passwordController.text.trim(),
     };
 
+    if (body['email'].isEmpty ||
+        body['name'].isEmpty ||
+        body['password'].isEmpty) {
+      _showNoInputDialog();
+      return;
+    }
+
     setState(() {
-      _isLoading = true; // Start loading
     });
 
     try {
@@ -200,21 +254,17 @@ class _SignupScreenState extends State<SignupScreen> {
       final responseData = json.decode(response.body);
 
       if (response.statusCode == 201) {
-        // Success - show success dialog
         _showSuccessDialog();
-      } else if (response.statusCode == 400 && responseData['error'] == 'User ini sudah terdaftar') {
-        // User already registered - show specific error dialog
+      } else if (response.statusCode == 400 &&
+          responseData['error'] == 'User ini sudah terdaftar') {
         _showUserAlreadyRegisteredDialog();
       } else {
-        // Other failure - show generic error dialog
         _showErrorDialog(responseData['error'] ?? 'Signup gagal');
       }
     } catch (error) {
-      // Handle any errors that occur during the HTTP request
       _showErrorDialog('Terjadi kesalahan, coba lagi');
     } finally {
       setState(() {
-        _isLoading = false; // Stop loading
       });
     }
   }
@@ -222,7 +272,7 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0B894B),
+      backgroundColor: const Color(0xFF34a853),
       body: SafeArea(
         child: Column(
           children: [
@@ -235,9 +285,9 @@ class _SignupScreenState extends State<SignupScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Image.asset(
-                          'assets/images/logo1.png',
-                          width: 150,
-                          height: 150,
+                          'assets/images/logo.png',
+                          width: 250,
+                          height: 250,
                         ),
                         const SizedBox(height: 16),
                       ],
@@ -271,7 +321,31 @@ class _SignupScreenState extends State<SignupScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 30),
+                    const Column(
+                      children: [
+                        Text(
+                          'Hey there,',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 24,
+                            color: Colors.black,
+                            fontWeight: FontWeight.w500,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                        Text(
+                          'Create an Account',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 24,
+                            color: Color(0xFF34a853),
+                            fontWeight: FontWeight.w900,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 50),
                     // Email field
                     TextField(
                       controller: _emailController,
@@ -286,12 +360,12 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 20),
                     // Username field
                     TextField(
                       controller: _usernameController,
                       decoration: InputDecoration(
-                        hintText: 'Nama Pengguna',
+                        hintText: 'Username',
                         hintStyle: const TextStyle(fontFamily: 'Poppins'),
                         filled: true,
                         fillColor: Colors.grey[200],
@@ -301,13 +375,13 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 20),
                     // Password field
                     TextField(
                       controller: _passwordController,
                       obscureText: true,
                       decoration: InputDecoration(
-                        hintText: 'Kata Sandi',
+                        hintText: 'Password',
                         hintStyle: const TextStyle(fontFamily: 'Poppins'),
                         filled: true,
                         fillColor: Colors.grey[200],
@@ -318,30 +392,31 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                     ),
                     const SizedBox(height: 25),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _signup,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0B894B),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
+                    Center(
+                      // Wrap with Center
+                      child: SizedBox(
+                        width: 190, // Set fixed width for button
+                        child: ElevatedButton(
+                          onPressed: () {
+                            // Handle login action
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF34a853),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          child: const Text(
+                            'Sign Up',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
                         ),
-                        child: _isLoading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white,
-                              )
-                            : const Text(
-                                'Daftar',
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                  fontFamily: 'Poppins',
-                                ),
-                              ),
                       ),
                     ),
                   ],
