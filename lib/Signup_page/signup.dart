@@ -182,7 +182,7 @@ void _showSuccessDialog() {
                   'Done',
                   style: TextStyle(
                     fontSize: 15,
-                    color: Color(0xFF34a853),
+                    color: Color(0xFF2cac69),
                     fontWeight: FontWeight.w700,
                     fontFamily: 'Poppins',
                   ),
@@ -243,7 +243,7 @@ void _showSuccessDialog() {
                     'Done',
                     style: TextStyle(
                       fontSize: 15,
-                      color: Color(0xFF34a853),
+                      color: Color(0xFF2cac69),
                       fontWeight: FontWeight.w700,
                       fontFamily: 'Poppins',
                     ),
@@ -304,7 +304,7 @@ void _showSuccessDialog() {
                     'OK',
                     style: TextStyle(
                       fontSize: 15,
-                      color: Color(0xFF34a853),
+                      color: Color(0xFF2cac69),
                       fontWeight: FontWeight.w700,
                       fontFamily: 'Poppins',
                     ),
@@ -321,7 +321,7 @@ void _showSuccessDialog() {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF34a853),
+      backgroundColor: const Color(0xFF2cac69),
       body: SafeArea(
         child: Column(
           children: [
@@ -387,7 +387,7 @@ void _showSuccessDialog() {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 24,
-                            color: Color(0xFF34a853),
+                            color: Color(0xFF2cac69),
                             fontWeight: FontWeight.w900,
                             fontFamily: 'Poppins',
                           ),
@@ -400,7 +400,7 @@ void _showSuccessDialog() {
                       decoration: InputDecoration(
                         hintText: 'Email',
                         prefixIcon: const Icon(Icons.email_outlined,
-                            color: Color(0xFF34a853)),
+                            color: Color(0xFF2cac69)),
                         hintStyle: const TextStyle(fontFamily: 'Poppins'),
                         filled: true,
                         fillColor: Colors.grey[200],
@@ -416,7 +416,7 @@ void _showSuccessDialog() {
                       decoration: InputDecoration(
                         hintText: 'Username',
                         prefixIcon: const Icon(Icons.person_outline,
-                            color: Color(0xFF34a853)),
+                            color: Color(0xFF2cac69)),
                         hintStyle: const TextStyle(fontFamily: 'Poppins'),
                         filled: true,
                         fillColor: Colors.grey[200],
@@ -433,7 +433,7 @@ void _showSuccessDialog() {
                       decoration: InputDecoration(
                         hintText: 'Password',
                         prefixIcon: const Icon(Icons.lock_outline,
-                            color: Color(0xFF34a853)),
+                            color: Color(0xFF2cac69)),
                         hintStyle: const TextStyle(fontFamily: 'Poppins'),
                         filled: true,
                         fillColor: Colors.grey[200],
@@ -465,7 +465,7 @@ void _showSuccessDialog() {
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _signup,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF34a853),
+                            backgroundColor: const Color(0xFF2cac69),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),

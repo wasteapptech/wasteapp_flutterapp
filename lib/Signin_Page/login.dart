@@ -190,7 +190,7 @@ class _LoginPageState extends State<LoginPage> {
                     'Done',
                     style: TextStyle(
                       fontSize: 15,
-                      color: Color(0xFF34a853),
+                      color: Color(0xFF2cac69),
                       fontWeight: FontWeight.w700,
                       fontFamily: 'Poppins',
                     ),
@@ -251,7 +251,7 @@ class _LoginPageState extends State<LoginPage> {
                     'Done',
                     style: TextStyle(
                       fontSize: 15,
-                      color: Color(0xFF34a853),
+                      color: Color(0xFF2cac69),
                       fontWeight: FontWeight.w700,
                       fontFamily: 'Poppins',
                     ),
@@ -268,7 +268,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF34a853),
+      backgroundColor: const Color(0xFF2cac69),
       body: SafeArea(
         child: Column(
           children: [
@@ -334,7 +334,7 @@ class _LoginPageState extends State<LoginPage> {
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 24,
-                              color: Color(0xFF34a853),
+                              color: Color(0xFF2cac69),
                               fontWeight: FontWeight.w900,
                               fontFamily: 'Poppins',
                             ),
@@ -347,7 +347,7 @@ class _LoginPageState extends State<LoginPage> {
                         decoration: InputDecoration(
                           hintText: 'Username',
                           prefixIcon: const Icon(Icons.person_outline,
-                              color: Color(0xFF34a853)),
+                              color: Color(0xFF2cac69)),
                           hintStyle: const TextStyle(fontFamily: 'Poppins'),
                           filled: true,
                           fillColor: Colors.grey[200],
@@ -366,7 +366,7 @@ class _LoginPageState extends State<LoginPage> {
                         decoration: InputDecoration(
                           hintText: 'Password',
                           prefixIcon: const Icon(Icons.lock_outline,
-                              color: Color(0xFF34a853)),
+                              color: Color(0xFF2cac69)),
                           hintStyle: const TextStyle(fontFamily: 'Poppins'),
                           filled: true,
                           fillColor: Colors.grey[200],
@@ -399,7 +399,7 @@ class _LoginPageState extends State<LoginPage> {
                           child: ElevatedButton(
                             onPressed: _isLoading ? null : _signin,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF34a853),
+                              backgroundColor: const Color(0xFF2cac69),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(25),
                               ),
@@ -450,7 +450,7 @@ class _LoginPageState extends State<LoginPage> {
                               child: const Text(
                                 'Daftar',
                                 style: TextStyle(
-                                  color: Color(0xFF34a853),
+                                  color: Color(0xFF2cac69),
                                   fontWeight: FontWeight.bold,
                                   fontFamily: 'Poppins',
                                 ),

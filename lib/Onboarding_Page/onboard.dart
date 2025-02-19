@@ -61,7 +61,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           fontSize: 18,
-                          color: Color(0xFF34a853),
+                          color: Color(0xFF2cac69),
                           fontWeight: FontWeight.w600,
                           fontFamily: 'Poppins',
                         ),
@@ -89,9 +89,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         width: _currentPage == index ? 20 : 8,
                         decoration: BoxDecoration(
                           color: _currentPage == index
-                              ? const Color(0xFF34a853)
+                              ? const Color(0xFF2cac69)
                               // ignore: deprecated_member_use
-                              : const Color(0xFF34a853).withOpacity(0.5),
+                              : const Color(0xFF2cac69).withOpacity(0.5),
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
@@ -129,7 +129,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             : "Selanjutnya",
                         style: const TextStyle(
                           fontSize: 20,
-                          color: Color(0xFF34a853),
+                          color: Color(0xFF2cac69),
                           fontWeight: FontWeight.w700,
                           fontFamily: 'Poppins',
                         ),

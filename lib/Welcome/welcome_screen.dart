@@ -34,14 +34,14 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF34a853),
+      backgroundColor: const Color(0xFF2cac69),
       body: SafeArea(
         child: Responsive(
           desktop: Row(
             children: [
               Expanded(
                 child: Container(
-                  color: const Color(0xFF34a853),
+                  color: const Color(0xFF2cac69),
                   child: const Center(
                     child: WelcomeImage(),
                   ),
@@ -83,7 +83,7 @@ class MobileWelcomeScreen extends StatelessWidget {
       children: [
         Container(
           height: MediaQuery.of(context).size.height * 0.55,
-          color: const Color(0xFF34a853),
+          color: const Color(0xFF2cac69),
           child: const Center(
             child: WelcomeImage(),
           ),
@@ -151,7 +151,7 @@ class LoginAndSignupBtn extends StatelessWidget {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF34a853),
+                backgroundColor: const Color(0xFF2cac69),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -189,7 +189,7 @@ class LoginAndSignupBtn extends StatelessWidget {
                 'Sign Up',
                 style: TextStyle(
                   fontSize: 18,
-                  color: Color(0xFF34a853),
+                  color: Color(0xFF2cac69),
                   fontWeight: FontWeight.w700,
                   fontFamily: 'Poppins',
                 ),

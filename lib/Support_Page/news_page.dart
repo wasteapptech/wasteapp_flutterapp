@@ -79,9 +79,9 @@ class _NewsPageState extends State<NewsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFD9D9D9),
+      backgroundColor: const Color(0xFFf1f4ff),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF34a853),
+        backgroundColor: const Color(0xFF2cac69),
         title: const Text(
           'Berita & Komunitas',
           style: TextStyle(
@@ -168,7 +168,7 @@ class _NewsPageState extends State<NewsPage> {
                       backgroundColor: Colors.transparent,
                       elevation: 0,
                       type: BottomNavigationBarType.fixed,
-                      selectedItemColor: const Color(0xFF34a853),
+                      selectedItemColor: const Color(0xFF2cac69),
                       unselectedItemColor: Colors.grey,
                       showUnselectedLabels: true,
                       selectedFontSize: 12,
@@ -275,7 +275,7 @@ class _NewsPageState extends State<NewsPage> {
                       article['source']['name'] ?? 'Unknown Source',
                       style: const TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF34a853),
+                        color: Color(0xFF2cac69),
                         fontWeight: FontWeight.w500,
                       ),
                     ),

@@ -65,7 +65,7 @@ void initState() {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF34a853),
+      backgroundColor: const Color(0xFF2cac69),
       body: Center(
         child: AnimatedBuilder(
           animation: _animationController,

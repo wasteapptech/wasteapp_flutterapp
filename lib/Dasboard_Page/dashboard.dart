@@ -11,7 +11,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  int _selectedIndex = 0; 
+  int _selectedIndex = 0;
 
   void _onItemTapped(int index, BuildContext context) {
     setState(() {
@@ -46,7 +46,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFD9D9D9),
+      backgroundColor: const Color(0xFFf1f4ff),
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -56,7 +56,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Container(
                   height: 200,
                   decoration: const BoxDecoration(
-                    color: Color(0xFF34a853),
+                    color: Color(0xFF2cac69),
                     borderRadius: BorderRadius.only(
                       bottomLeft: Radius.circular(24),
                       bottomRight: Radius.circular(24),
@@ -66,10 +66,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     children: [
                       Positioned(
                         right: 0,
-                        bottom: 0,
+                        top: 60,
                         child: Image.asset(
                           'assets/images/people_recycling.png',
-                          height: 150,
+                          height: 169,
                         ),
                       ),
                       Padding(
@@ -100,7 +100,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     style: TextStyle(
                                       fontSize: 24,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF34a853),
+                                      color: Color(0xFF2cac69),
                                     ),
                                   ),
                                 ],
@@ -177,79 +177,86 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         color: Colors.black12,
                         blurRadius: 10,
                         offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: BottomNavigationBar(
-                    currentIndex: _selectedIndex,
-                    onTap: (index) => _onItemTapped(index, context), // Teruskan `context` ke fungsi
-                    backgroundColor: Colors.transparent,
-                    elevation: 0,
-                    type: BottomNavigationBarType.fixed,
-                    selectedItemColor: const Color(0xFF34a853),
-                    unselectedItemColor: Colors.grey,
-                    showUnselectedLabels: true,
-                    selectedFontSize: 12,
-                    unselectedFontSize: 12,
-                    items: const [
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.home),
-                        label: 'Home',
                       ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.article),
-                        label: 'News',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.qr_code_scanner),
-                        label: 'Scan',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.bar_chart),
-                        label: 'Statistics',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.person),
-                        label: 'Profile',
-                        ),
                     ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: BottomNavigationBar(
+                      currentIndex: _selectedIndex,
+                      onTap: (index) => _onItemTapped(
+                          index, context), 
+                      backgroundColor: Colors.transparent,
+                      elevation: 0,
+                      type: BottomNavigationBarType.fixed,
+                      selectedItemColor: const Color(0xFF2cac69),
+                      unselectedItemColor: Colors.grey,
+                      showUnselectedLabels: true,
+                      selectedFontSize: 12,
+                      unselectedFontSize: 12,
+                      items: const [
+                        BottomNavigationBarItem(
+                          icon: Icon(Icons.home),
+                          label: 'Home',
+                        ),
+                        BottomNavigationBarItem(
+                          icon: Icon(Icons.article),
+                          label: 'News',
+                        ),
+                        BottomNavigationBarItem(
+                          icon: Icon(Icons.qr_code_scanner),
+                          label: 'Scan',
+                        ),
+                        BottomNavigationBarItem(
+                          icon: Icon(Icons.bar_chart),
+                          label: 'Statistics',
+                        ),
+                        BottomNavigationBarItem(
+                          icon: Icon(Icons.person),
+                          label: 'Profile',
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
         ],
       ),
     );
   }
 
-
   Widget _buildMenuCard(String title, IconData icon) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Color(0xFF2cac69), width: 2),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 0,
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 10,
-            offset: const Offset(0, 2),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            icon,
-            size: 32,
-            color: const Color(0xFF34a853),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.9),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              size: 50,
+              color: const Color(0xFF2cac69),
+            ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
             title,
             textAlign: TextAlign.center,
@@ -269,7 +276,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Color(0xFF2cac69), width: 2),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.1),
