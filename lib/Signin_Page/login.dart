@@ -33,7 +33,8 @@ class _LoginPageState extends State {
       return;
     }
 
-    final Uri url = Uri.parse('https://api-wasteapp.vercel.app/api/auth/signin');
+    final Uri url =
+        Uri.parse('https://api-wasteapp.vercel.app/api/auth/signin');
 
     try {
       final http.Response response = await http.post(
@@ -52,7 +53,8 @@ class _LoginPageState extends State {
         _showErrorDialog(responseBody['error'] ?? 'SignIn gagal');
       }
     } catch (error) {
-      _showErrorDialog('Network error. Please check your connection and try again.');
+      _showErrorDialog(
+          'Network error. Please check your connection and try again.');
     } finally {
       setState(() {
         _isLoading = false;
@@ -324,7 +326,8 @@ class _LoginPageState extends State {
                         controller: _usernameController,
                         decoration: InputDecoration(
                           hintText: 'Username',
-                          prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF34a853)),
+                          prefixIcon: const Icon(Icons.person_outline,
+                              color: Color(0xFF34a853)),
                           hintStyle: const TextStyle(fontFamily: 'Poppins'),
                           filled: true,
                           fillColor: Colors.grey[200],
@@ -332,7 +335,8 @@ class _LoginPageState extends State {
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
                           ),
-                          contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                          contentPadding:
+                              const EdgeInsets.symmetric(vertical: 16),
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -341,7 +345,8 @@ class _LoginPageState extends State {
                         obscureText: !_isPasswordVisible,
                         decoration: InputDecoration(
                           hintText: 'Password',
-                          prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF34a853)),
+                          prefixIcon: const Icon(Icons.lock_outline,
+                              color: Color(0xFF34a853)),
                           hintStyle: const TextStyle(fontFamily: 'Poppins'),
                           filled: true,
                           fillColor: Colors.grey[200],
@@ -349,10 +354,13 @@ class _LoginPageState extends State {
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
                           ),
-                          contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                          contentPadding:
+                              const EdgeInsets.symmetric(vertical: 16),
                           suffixIcon: IconButton(
                             icon: Icon(
-                              _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                              _isPasswordVisible
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
                               color: Colors.grey,
                             ),
                             onPressed: () {
@@ -360,22 +368,6 @@ class _LoginPageState extends State {
                                 _isPasswordVisible = !_isPasswordVisible;
                               });
                             },
-                          ),
-                        ),
-                      ),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () {
-                            // Implement forgot password functionality
-                          },
-                          child: const Text(
-                            'Lupa password?',
-                            style: TextStyle(
-                              color: Color(0xFF34a853),
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w500,
-                            ),
                           ),
                         ),
                       ),
@@ -427,12 +419,14 @@ class _LoginPageState extends State {
                               ),
                             ),
                             TextButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => const SignupScreen()),
-                              );
-                            },
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const SignupScreen()),
+                                );
+                              },
                               child: const Text(
                                 'Daftar',
                                 style: TextStyle(

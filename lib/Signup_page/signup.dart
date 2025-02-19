@@ -3,6 +3,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:wasteapptest/Signin_Page/login.dart';
+
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
@@ -66,6 +68,8 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
+  
+
   void _showNoInputDialog() {
     showDialog(
       context: context,
@@ -127,66 +131,70 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => Center(
-        child: Card(
-          elevation: 10,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SvgPicture.asset(
-                  'assets/svg/success-svgrepo-com.svg',
-                  width: 50,
-                  height: 50,
+void _showSuccessDialog() {
+  showDialog(
+    context: context,
+    builder: (ctx) => Center(
+      child: Card(
+        elevation: 10,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SvgPicture.asset(
+                'assets/svg/success-svgrepo-com.svg',
+                width: 50,
+                height: 50,
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Pendaftaran Berhasil',
+                style: TextStyle(
+                  fontSize: 20,
+                  color: Colors.black,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Poppins',
                 ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Pendaftaran Berhasil',
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Akun Anda berhasil terdaftar.',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.black,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(ctx).pop(); 
+                  Navigator.pushReplacement( 
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginPage()), 
+                  );
+                },
+                child: const Text(
+                  'Done',
                   style: TextStyle(
-                    fontSize: 20,
-                    color: Colors.black,
+                    fontSize: 15,
+                    color: Color(0xFF34a853),
                     fontWeight: FontWeight.w700,
                     fontFamily: 'Poppins',
                   ),
                 ),
-                const SizedBox(height: 10),
-                const Text(
-                  'Akun Anda berhasil terdaftar.',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.black,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(ctx).pop();
-                  },
-                  child: const Text(
-                    'Done',
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Color(0xFF34a853),
-                      fontWeight: FontWeight.w700,
-                      fontFamily: 'Poppins',
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _showErrorDialog(String message) {
     showDialog(
