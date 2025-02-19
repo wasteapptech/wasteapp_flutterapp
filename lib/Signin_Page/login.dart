@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:wasteapptest/Dasboard_Page/dashboard.dart';
 import 'package:wasteapptest/Signup_page/signup.dart';
 
 class LoginPage extends StatefulWidget {
@@ -11,13 +12,13 @@ class LoginPage extends StatefulWidget {
   _LoginPageState createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State {
+class _LoginPageState extends State<LoginPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _isPasswordVisible = false;
 
-  Future _signin() async {
+  Future<void> _signin() async {
     setState(() {
       _isLoading = true;
     });
@@ -33,8 +34,7 @@ class _LoginPageState extends State {
       return;
     }
 
-    final Uri url =
-        Uri.parse('https://api-wasteapp.vercel.app/api/auth/signin');
+    final Uri url = Uri.parse('https://api-wasteapp.vercel.app/api/auth/signin');
 
     try {
       final http.Response response = await http.post(
@@ -47,7 +47,11 @@ class _LoginPageState extends State {
       );
 
       if (response.statusCode == 201) {
-        _showSuccessDialog();
+        await _showSuccessDialog(); 
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const DashboardScreen()),
+        );
       } else {
         final responseBody = json.decode(response.body);
         _showErrorDialog(responseBody['error'] ?? 'SignIn gagal');
@@ -61,6 +65,7 @@ class _LoginPageState extends State {
       });
     }
   }
+
 
   void _showNoInputDialog() {
     showDialog(
@@ -184,8 +189,8 @@ class _LoginPageState extends State {
     );
   }
 
-  void _showSuccessDialog() {
-    showDialog(
+  Future<void> _showSuccessDialog() async {
+    return showDialog(
       context: context,
       builder: (ctx) => Center(
         child: Card(
