@@ -12,6 +12,8 @@ dependencies:
   flutter_animate: ^4.5.2
   http: 1.2.2
   flutter_svg: ^1.0.0
+  intl: ^0.18.1
+  shimmer: ^3.0.0
 
 
 dev_dependencies:

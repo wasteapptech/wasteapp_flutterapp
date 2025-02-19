@@ -1,8 +1,47 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 
-class DashboardScreen extends StatelessWidget {
+import 'package:wasteapptest/Support Page/news_page.dart';
+
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  _DashboardScreenState createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  int _selectedIndex = 0; // Indeks item yang dipilih
+
+  void _onItemTapped(int index, BuildContext context) {
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    switch (index) {
+      case 0:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const DashboardScreen()),
+        );
+        break;
+      case 1:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const NewsPage()),
+        );
+        break;
+      case 2:
+        // Tambahkan navigasi untuk halaman Scan
+        break;
+      case 3:
+        // Tambahkan navigasi untuk halaman Statistics
+        break;
+      case 4:
+        // Tambahkan navigasi untuk halaman Profile
+        break;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +68,7 @@ class DashboardScreen extends StatelessWidget {
                         right: 0,
                         bottom: 0,
                         child: Image.asset(
-                          'assets/images/people_recycling.png', 
+                          'assets/images/people_recycling.png',
                           height: 150,
                         ),
                       ),
@@ -47,7 +86,7 @@ class DashboardScreen extends StatelessWidget {
                               ),
                               child: const Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                children:  [
+                                children: [
                                   Text(
                                     'Saldo kamu yang tersedia',
                                     style: TextStyle(
@@ -73,7 +112,6 @@ class DashboardScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: GridView.count(
@@ -115,20 +153,19 @@ class DashboardScreen extends StatelessWidget {
                         'Admin',
                         'Hanya admin yang bisa mengakses fitur ini',
                       ),
-                      const SizedBox(height: 80), 
+                      const SizedBox(height: 80),
                     ],
                   ),
                 ),
               ],
             ),
           ),
-
           Positioned(
-            bottom: 16, 
-            left: 16,  
-            right: 16,  
+            bottom: 16,
+            left: 16,
+            right: 16,
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(30), 
+              borderRadius: BorderRadius.circular(30),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
                 child: Container(
@@ -140,52 +177,55 @@ class DashboardScreen extends StatelessWidget {
                         color: Colors.black12,
                         blurRadius: 10,
                         offset: Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: BottomNavigationBar(
-                      backgroundColor: Colors.transparent,
-                      elevation: 0,
-                      type: BottomNavigationBarType.fixed,
-                      selectedItemColor: const Color(0xFF34a853),
-                      unselectedItemColor: Colors.grey,
-                      showUnselectedLabels: true,
-                      selectedFontSize: 12,
-                      unselectedFontSize: 12,
-                      items: const [
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.home),
-                          label: 'Home',
-                        ),
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.article),
-                          label: 'Activity',
-                        ),
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.qr_code_scanner),
-                          label: 'Scan',
-                        ),
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.bar_chart),
-                          label: 'Statistics',
-                        ),
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.person),
-                          label: 'Profile',
-                        ),
-                      ],
                     ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: BottomNavigationBar(
+                    currentIndex: _selectedIndex,
+                    onTap: (index) => _onItemTapped(index, context), // Teruskan `context` ke fungsi
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    type: BottomNavigationBarType.fixed,
+                    selectedItemColor: const Color(0xFF34a853),
+                    unselectedItemColor: Colors.grey,
+                    showUnselectedLabels: true,
+                    selectedFontSize: 12,
+                    unselectedFontSize: 12,
+                    items: const [
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.home),
+                        label: 'Home',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.article),
+                        label: 'News',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.qr_code_scanner),
+                        label: 'Scan',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.bar_chart),
+                        label: 'Statistics',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.person),
+                        label: 'Profile',
+                        ),
+                    ],
                   ),
                 ),
               ),
             ),
           ),
+        ),
         ],
       ),
     );
   }
+
 
   Widget _buildMenuCard(String title, IconData icon) {
     return Container(
