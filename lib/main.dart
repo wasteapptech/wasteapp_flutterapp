@@ -1,19 +1,30 @@
-import 'package:flutter/material.dart'; 
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wasteapptest/Dasboard_Page/dashboard.dart'; 
 import 'package:wasteapptest/Splash_screen/splash_screen.dart';
 
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final bool isLoggedIn = await getLoginStatus();
+  runApp(MyApp(isLoggedIn: isLoggedIn));
+}
+
+Future<bool> getLoginStatus() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getBool('isLoggedIn') ?? false;
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool isLoggedIn;
+
+  const MyApp({super.key, required this.isLoggedIn});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      title: 'WaveApp',
-      home: SplashScreen(),
+    return MaterialApp(
+      title: 'WasteApp',
+      home: isLoggedIn ? const DashboardScreen() : const SplashScreen(),
     );
   }
 }

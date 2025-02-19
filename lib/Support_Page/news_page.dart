@@ -16,7 +16,7 @@ class NewsPage extends StatefulWidget {
 class _NewsPageState extends State<NewsPage> {
   List<Map<String, dynamic>> newsItems = [];
   bool isLoading = true;
-  int _selectedIndex = 1; // Indeks untuk BottomNavigationBar
+  int _selectedIndex = 1;
 
   @override
   void initState() {
@@ -66,16 +66,12 @@ class _NewsPageState extends State<NewsPage> {
         );
         break;
       case 1:
-        // Tetap di halaman NewsPage
         break;
       case 2:
-        // Navigasi ke halaman Scan
         break;
       case 3:
-        // Navigasi ke halaman Statistics
         break;
       case 4:
-        // Navigasi ke halaman Profile
         break;
     }
   }
@@ -144,7 +140,6 @@ class _NewsPageState extends State<NewsPage> {
               ),
             ),
           ),
-          // Bottom Navigation Bar
           Positioned(
             bottom: 16,
             left: 16,
@@ -162,7 +157,8 @@ class _NewsPageState extends State<NewsPage> {
                         color: Colors.black12,
                         blurRadius: 10,
                         offset: Offset(0, 4),
-                  )],
+                      )
+                    ],
                   ),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
@@ -213,17 +209,17 @@ class _NewsPageState extends State<NewsPage> {
   Widget _buildNewsCard(Map<String, dynamic> article) {
     final DateTime publishedAt = DateTime.parse(article['publishedAt']);
     final String formattedDate = DateFormat('dd MMM yyyy').format(publishedAt);
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black12,
             blurRadius: 10,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -232,7 +228,8 @@ class _NewsPageState extends State<NewsPage> {
         children: [
           if (article['urlToImage'] != null)
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(12)),
               child: Image.network(
                 article['urlToImage'],
                 height: 150,

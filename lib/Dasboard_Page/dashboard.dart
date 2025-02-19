@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 
-import 'package:wasteapptest/Support Page/news_page.dart';
+import 'package:wasteapptest/Support_Page/news_page.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -11,7 +11,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  int _selectedIndex = 0; // Indeks item yang dipilih
+  int _selectedIndex = 0; 
 
   void _onItemTapped(int index, BuildContext context) {
     setState(() {

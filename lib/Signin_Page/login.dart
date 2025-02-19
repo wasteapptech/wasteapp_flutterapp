@@ -4,6 +4,12 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:wasteapptest/Dasboard_Page/dashboard.dart';
 import 'package:wasteapptest/Signup_page/signup.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+Future<bool> getLoginStatus() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getBool('isLoggedIn') ?? false;
+}
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -40,14 +46,11 @@ class _LoginPageState extends State<LoginPage> {
       final http.Response response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'name': name,
-          'password': password,
-        }),
+        body: json.encode({'name': name, 'password': password}),
       );
 
       if (response.statusCode == 201) {
-        await _showSuccessDialog(); 
+        await saveLoginStatus(true);
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const DashboardScreen()),
@@ -57,8 +60,7 @@ class _LoginPageState extends State<LoginPage> {
         _showErrorDialog(responseBody['error'] ?? 'SignIn gagal');
       }
     } catch (error) {
-      _showErrorDialog(
-          'Network error. Please check your connection and try again.');
+      _showErrorDialog('Network error. Please check your connection and try again.');
     } finally {
       setState(() {
         _isLoading = false;
@@ -66,6 +68,19 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  Future<void> saveLoginStatus(bool isLoggedIn) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isLoggedIn', isLoggedIn);
+  }
+
+  Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('isLoggedIn');
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginPage()),
+    );
+  }
 
   void _showNoInputDialog() {
     showDialog(
