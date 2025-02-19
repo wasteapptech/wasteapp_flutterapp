@@ -15,7 +15,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
-
+  bool _isPasswordVisible = false;
   Future<void> _signup() async {
     setState(() {
       _isLoading = true;
@@ -31,7 +31,9 @@ class _SignupScreenState extends State<SignupScreen> {
       'password': _passwordController.text.trim(),
     };
 
-    if (body['email'].isEmpty || body['name'].isEmpty || body['password'].isEmpty) {
+    if (body['email'].isEmpty ||
+        body['name'].isEmpty ||
+        body['password'].isEmpty) {
       setState(() {
         _isLoading = false;
       });
@@ -389,6 +391,8 @@ class _SignupScreenState extends State<SignupScreen> {
                       controller: _emailController,
                       decoration: InputDecoration(
                         hintText: 'Email',
+                        prefixIcon: const Icon(Icons.email_outlined,
+                            color: Color(0xFF34a853)),
                         hintStyle: const TextStyle(fontFamily: 'Poppins'),
                         filled: true,
                         fillColor: Colors.grey[200],
@@ -403,6 +407,8 @@ class _SignupScreenState extends State<SignupScreen> {
                       controller: _usernameController,
                       decoration: InputDecoration(
                         hintText: 'Username',
+                        prefixIcon: const Icon(Icons.person_outline,
+                            color: Color(0xFF34a853)),
                         hintStyle: const TextStyle(fontFamily: 'Poppins'),
                         filled: true,
                         fillColor: Colors.grey[200],
@@ -415,15 +421,32 @@ class _SignupScreenState extends State<SignupScreen> {
                     const SizedBox(height: 20),
                     TextField(
                       controller: _passwordController,
-                      obscureText: true,
+                      obscureText: !_isPasswordVisible,
                       decoration: InputDecoration(
                         hintText: 'Password',
+                        prefixIcon: const Icon(Icons.lock_outline,
+                            color: Color(0xFF34a853)),
                         hintStyle: const TextStyle(fontFamily: 'Poppins'),
                         filled: true,
                         fillColor: Colors.grey[200],
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
+                        ),
+                        contentPadding:
+                            const EdgeInsets.symmetric(vertical: 16),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _isPasswordVisible
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            color: Colors.grey,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _isPasswordVisible = !_isPasswordVisible;
+                            });
+                          },
                         ),
                       ),
                     ),

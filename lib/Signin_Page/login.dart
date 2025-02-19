@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:wasteapptest/Signup_page/signup.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -10,14 +11,13 @@ class LoginPage extends StatefulWidget {
   _LoginPageState createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends State {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _isPasswordVisible = false;
 
-  Future<void> _signin() async {
-    // Set loading state
+  Future _signin() async {
     setState(() {
       _isLoading = true;
     });
@@ -25,7 +25,6 @@ class _LoginPageState extends State<LoginPage> {
     final String name = _usernameController.text.trim();
     final String password = _passwordController.text.trim();
 
-    // Check if name or password is empty
     if (name.isEmpty || password.isEmpty) {
       setState(() {
         _isLoading = false;
@@ -37,8 +36,7 @@ class _LoginPageState extends State<LoginPage> {
     final Uri url = Uri.parse('https://api-wasteapp.vercel.app/api/auth/signin');
 
     try {
-      // Send POST request to the API with updated body parameters
-      final response = await http.post(
+      final http.Response response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
@@ -48,26 +46,20 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (response.statusCode == 201) {
-        // Handle successful login
-        // You can navigate to the next screen here
+        _showSuccessDialog();
       } else {
-        // If login fails (e.g., invalid credentials)
         final responseBody = json.decode(response.body);
-        final String error = responseBody['error'] ?? 'Login failed. Please try again.';
-        _showErrorDialog(error);
+        _showErrorDialog(responseBody['error'] ?? 'SignIn gagal');
       }
     } catch (error) {
-      // Handle any network errors
       _showErrorDialog('Network error. Please check your connection and try again.');
     } finally {
-      // Reset loading state
       setState(() {
         _isLoading = false;
       });
     }
   }
 
-  // Show No Input Dialog
   void _showNoInputDialog() {
     showDialog(
       context: context,
@@ -129,7 +121,6 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // Show Error Dialog
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
@@ -163,6 +154,67 @@ class _LoginPageState extends State<LoginPage> {
                 Text(
                   message,
                   style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.black,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+                const SizedBox(height: 20),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                  },
+                  child: const Text(
+                    'Done',
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Color(0xFF34a853),
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => Center(
+        child: Card(
+          elevation: 10,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SvgPicture.asset(
+                  'assets/svg/success-svgrepo-com.svg',
+                  width: 50,
+                  height: 50,
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'SignIn Success',
+                  style: TextStyle(
+                    fontSize: 20,
+                    color: Colors.black,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Kamu berhasil login',
+                  style: TextStyle(
                     fontSize: 16,
                     color: Colors.black,
                     fontFamily: 'Poppins',
@@ -375,9 +427,12 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                             ),
                             TextButton(
-                              onPressed: () {
-                                // Navigate to signup page
-                              },
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const SignupScreen()),
+                              );
+                            },
                               child: const Text(
                                 'Daftar',
                                 style: TextStyle(
