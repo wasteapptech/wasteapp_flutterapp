@@ -141,7 +141,7 @@ class _NewsPageState extends State<NewsPage> {
             ),
           ),
           Positioned(
-            bottom: 16,
+            bottom: 5,
             left: 16,
             right: 16,
             child: ClipRRect(

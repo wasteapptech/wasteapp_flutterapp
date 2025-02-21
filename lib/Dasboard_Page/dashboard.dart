@@ -141,7 +141,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0,),
                   child: Column(
                     children: [
                       _buildInfoCard(
@@ -161,7 +161,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           Positioned(
-            bottom: 16,
+            bottom: 5,
             left: 16,
             right: 16,
             child: ClipRRect(
