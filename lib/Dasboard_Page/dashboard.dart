@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
-
 import 'package:wasteapptest/Support_Page/news_page.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -46,7 +44,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFf1f4ff),
+      backgroundColor: const Color(0xfffefefe),
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -123,19 +121,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     children: [
                       _buildMenuCard(
                         'Tempat Sampah Terdekat',
-                        Icons.location_on,
+                        Icons.location_on_outlined,
                       ),
                       _buildMenuCard(
                         'Hasil Transaksi Sampah',
-                        Icons.receipt_long,
+                        Icons.receipt_long_outlined,
                       ),
                       _buildMenuCard(
                         'Layanan Pelanggan',
-                        Icons.headset_mic,
+                        Icons.headset_mic_outlined,
                       ),
                       _buildMenuCard(
                         'Dompet',
-                        Icons.account_balance_wallet,
+                        Icons.account_balance_wallet_outlined,
                       ),
                     ],
                   ),
@@ -379,30 +377,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildMenuCard(String title, IconData icon) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xfff7fef9),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Color(0xFF2cac69), width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: const Color(0xFFedf9f4), width: 2),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.9),
-              shape: BoxShape.circle,
-            ),
             child: Icon(
               icon,
               size: 50,
-              color: const Color(0xFF2cac69),
+              color: Color(0xFF88C9A2),
             ),
           ),
           const SizedBox(height: 12),
@@ -424,17 +411,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xfff7fef9),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Color(0xFF2cac69), width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 0,
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: const Color(0xFFedf9f4), width: 2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

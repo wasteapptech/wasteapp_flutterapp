@@ -79,7 +79,7 @@ Future<void> fetchNews() async {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFf1f4ff),
+      backgroundColor: const Color(0xfffefefe),
       appBar: AppBar(
         backgroundColor: const Color(0xFF2cac69),
         title: const Text(
