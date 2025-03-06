@@ -55,10 +55,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   height: 200,
                   decoration: const BoxDecoration(
                     color: Color(0xFF2cac69),
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(24),
-                      bottomRight: Radius.circular(24),
-                    ),
                   ),
                   child: Stack(
                     children: [

@@ -24,49 +24,51 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   bool _isPasswordVisible = false;
 
-  Future<void> _signin() async {
+Future<void> _signin() async {
+  setState(() {
+    _isLoading = true;
+  });
+
+  final String name = _usernameController.text.trim();
+  final String password = _passwordController.text.trim();
+
+  if (name.isEmpty || password.isEmpty) {
     setState(() {
-      _isLoading = true;
+      _isLoading = false;
     });
-
-    final String name = _usernameController.text.trim();
-    final String password = _passwordController.text.trim();
-
-    if (name.isEmpty || password.isEmpty) {
-      setState(() {
-        _isLoading = false;
-      });
-      _showNoInputDialog();
-      return;
-    }
-
-    final Uri url = Uri.parse('https://api-wasteapp.vercel.app/api/auth/signin');
-
-    try {
-      final http.Response response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'name': name, 'password': password}),
-      );
-
-      if (response.statusCode == 201) {
-        await saveLoginStatus(true);
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const DashboardScreen()),
-        );
-      } else {
-        final responseBody = json.decode(response.body);
-        _showErrorDialog(responseBody['error'] ?? 'SignIn gagal');
-      }
-    } catch (error) {
-      _showErrorDialog('Network error. Please check your connection and try again.');
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+    _showNoInputDialog();
+    return;
   }
+
+  final Uri url = Uri.parse('https://api-wasteapp.vercel.app/api/auth/signin');
+
+  try {
+    final http.Response response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'name': name, 'password': password}),
+    );
+
+    if (response.statusCode == 201) {
+      await saveLoginStatus(true);
+      await _showSuccessDialog(); // Show success dialog
+      Navigator.pushReplacement(
+        // ignore: use_build_context_synchronously
+        context,
+        MaterialPageRoute(builder: (context) => const DashboardScreen()),
+      );
+    } else {
+      final responseBody = json.decode(response.body);
+      _showErrorDialog(responseBody['error'] ?? 'SignIn gagal');
+    }
+  } catch (error) {
+    _showErrorDialog('Network error. Please check your connection and try again.');
+  } finally {
+    setState(() {
+      _isLoading = false;
+    });
+  }
+}
 
   Future<void> saveLoginStatus(bool isLoggedIn) async {
     final prefs = await SharedPreferences.getInstance();
