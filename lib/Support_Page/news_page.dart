@@ -24,34 +24,34 @@ class _NewsPageState extends State<NewsPage> {
     fetchNews();
   }
 
-  Future<void> fetchNews() async {
-    const apiKey = '4976a49c841d4519b5a32851ccc51f54';
-    const url = 'https://newsapi.org/v2/everything?' +
-        'q=sampah+OR+waste+management+OR+recycling&' +
-        'language=id&' +
-        'sortBy=publishedAt&' +
-        'apiKey=$apiKey';
+Future<void> fetchNews() async {
+  const apiKey = '4976a49c841d4519b5a32851ccc51f54';
+  const url = 'https://newsapi.org/v2/everything?' 'q=sampah+OR+waste+management+OR+recycling&' 'language=id&' 'sortBy=publishedAt&' 'apiKey=$apiKey';
 
-    try {
-      final response = await http.get(Uri.parse(url));
+  try {
+    final response = await http.get(Uri.parse(url));
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (mounted) {
         setState(() {
           newsItems = List<Map<String, dynamic>>.from(data['articles'])
               .take(5)
               .toList();
           isLoading = false;
         });
-      } else {
-        throw Exception('Failed to load news');
       }
-    } catch (e) {
+    } else {
+      throw Exception('Failed to load news');
+    }
+  } catch (e) {
+    if (mounted) {
       setState(() {
         isLoading = false;
       });
     }
   }
+}
 
   void _onItemTapped(int index, BuildContext context) {
     setState(() {
@@ -140,65 +140,213 @@ class _NewsPageState extends State<NewsPage> {
               ),
             ),
           ),
-          Positioned(
-            bottom: 5,
-            left: 16,
-            right: 16,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(30),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white54,
-                    borderRadius: BorderRadius.circular(30),
-                    boxShadow: const [
+         Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Stack(
+              alignment: Alignment.center,
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  height: 70,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30),
+                    ),
+                    boxShadow: [
                       BoxShadow(
                         color: Colors.black12,
                         blurRadius: 10,
-                        offset: Offset(0, 4),
-                      )
+                        offset: Offset(0, -2),
+                      ),
                     ],
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: BottomNavigationBar(
-                      currentIndex: _selectedIndex,
-                      onTap: (index) => _onItemTapped(index, context),
-                      backgroundColor: Colors.transparent,
-                      elevation: 0,
-                      type: BottomNavigationBarType.fixed,
-                      selectedItemColor: const Color(0xFF2cac69),
-                      unselectedItemColor: Colors.grey,
-                      showUnselectedLabels: true,
-                      selectedFontSize: 12,
-                      unselectedFontSize: 12,
-                      items: const [
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.home),
-                          label: 'Home',
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      // Home button
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => _onItemTapped(0, context),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.home_outlined,
+                                color: _selectedIndex == 0
+                                    ? const Color(0xFF2cac69)
+                                    : Colors.grey,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Home',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: _selectedIndex == 0
+                                      ? const Color(0xFF2cac69)
+                                      : Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Container(
+                                height: 4,
+                                width: 4,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: _selectedIndex == 0
+                                      ? const Color(0xFF2cac69)
+                                      : Colors.transparent,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.article),
-                          label: 'News',
+                      ),
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => _onItemTapped(1, context),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.article_outlined,
+                                color: _selectedIndex == 1
+                                    ? const Color(0xFF2cac69)
+                                    : Colors.grey,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'News',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: _selectedIndex == 1
+                                      ? const Color(0xFF2cac69)
+                                      : Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Container(
+                                height: 4,
+                                width: 4,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: _selectedIndex == 1
+                                      ? const Color(0xFF2cac69)
+                                      : Colors.transparent,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.qr_code_scanner),
-                          label: 'Scan',
+                      ),
+                      Expanded(child: Container()),
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => _onItemTapped(3, context),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.bar_chart_outlined,
+                                color: _selectedIndex == 3
+                                    ? const Color(0xFF2cac69)
+                                    : Colors.grey,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Leaderboard',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: _selectedIndex == 3
+                                      ? const Color(0xFF2cac69)
+                                      : Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Container(
+                                height: 4,
+                                width: 4,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: _selectedIndex == 3
+                                      ? const Color(0xFF2cac69)
+                                      : Colors.transparent,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.bar_chart),
-                          label: 'Statistics',
+                      ),
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => _onItemTapped(4, context),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.person_outline,
+                                color: _selectedIndex == 4
+                                    ? const Color(0xFF2cac69)
+                                    : Colors.grey,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Profile',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: _selectedIndex == 4
+                                      ? const Color(0xFF2cac69)
+                                      : Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Container(
+                                height: 4,
+                                width: 4,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: _selectedIndex == 4
+                                      ? const Color(0xFF2cac69)
+                                      : Colors.transparent,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.person),
-                          label: 'Profile',
-                        ),
-                      ],
+                      ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  top: -25,
+                  child: GestureDetector(
+                    onTap: () => _onItemTapped(2, context),
+                    child: Container(
+                      height: 65,
+                      width: 65,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF2cac69),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 8,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.qr_code_scanner_outlined,
+                        color: Colors.white,
+                        size: 30,
+                      ),
                     ),
                   ),
                 ),
-              ),
+              ],
             ),
           ),
         ],
