@@ -19,10 +19,14 @@ class _SurveyPageState extends State<SurveyPage> {
   bool _hasCompletedSurvey = false;
   String? _userEmail;
 
+  // Add a Future variable to store the result of _checkSurveyStatus
+  late Future<void> _surveyStatusFuture;
+
   @override
   void initState() {
     super.initState();
-    _checkSurveyStatus();
+    // Initialize the Future variable in initState
+    _surveyStatusFuture = _checkSurveyStatus();
   }
 
   Future<void> _checkSurveyStatus() async {
@@ -35,23 +39,30 @@ class _SurveyPageState extends State<SurveyPage> {
       _hasCompletedSurvey = hasCompletedSurvey;
     });
 
-    if (email != null && !hasCompletedSurvey) {
+    if (email != null) {
       try {
         final response = await http.get(
-          Uri.parse('https://api-wasteapp.vercel.app/api/submit/check/survey/$email'),
+          Uri.parse(
+              'https://api-wasteapp.vercel.app/api/submit/check/survey/$email'),
         );
 
         if (response.statusCode == 200) {
           final responseData = json.decode(response.body);
+
           if (responseData['completed'] == true) {
             setState(() {
               _hasCompletedSurvey = true;
             });
             await prefs.setBool('hasCompletedSurvey', true);
+          } else {
+            setState(() {
+              _hasCompletedSurvey = false;
+            });
+            await prefs.setBool('hasCompletedSurvey', false);
           }
         }
       } catch (error) {
-        print('Error checking survey status: $error');
+        // Handle error silently
       }
     }
   }
@@ -85,18 +96,19 @@ class _SurveyPageState extends State<SurveyPage> {
       if (response.statusCode == 200) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('hasCompletedSurvey', true);
-        
+
         setState(() {
           _hasCompletedSurvey = true;
         });
-        
+
         await _showSuccessDialog();
       } else {
         final responseData = json.decode(response.body);
         _showErrorDialog(responseData['error'] ?? 'Gagal mengirim survei');
       }
     } catch (error) {
-      _showErrorDialog('Network error. Silakan periksa koneksi Anda dan coba lagi.');
+      _showErrorDialog(
+          'Network error. Silakan periksa koneksi Anda dan coba lagi.');
     } finally {
       setState(() {
         _isSubmitting = false;
@@ -287,6 +299,12 @@ class _SurveyPageState extends State<SurveyPage> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _checkSurveyStatus();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF2cac69),
@@ -324,239 +342,266 @@ class _SurveyPageState extends State<SurveyPage> {
           Expanded(
             child: Container(
               padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.only(
+                borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(30),
                   topRight: Radius.circular(30),
                 ),
               ),
-              child: _hasCompletedSurvey
-                  ? _buildCompletedSurveyCard()
-                  : SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Question 1
-                          const Text(
-                            'Apakah anda memiliki niat yang kuat untuk membuang sampah pada tempatnya?',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Radio buttons for question 1
-                          RadioListTile<String>(
-                            title: const Text('Sangat Setuju'),
-                            value: 'Sangat Setuju',
-                            groupValue: _motivationAnswer,
-                            activeColor: const Color(0xFF2cac69),
-                            contentPadding: EdgeInsets.zero,
-                            onChanged: (value) {
-                              setState(() {
-                                _motivationAnswer = value;
-                              });
-                            },
-                          ),
-                          RadioListTile<String>(
-                            title: const Text('Setuju'),
-                            value: 'Setuju',
-                            groupValue: _motivationAnswer,
-                            activeColor: const Color(0xFF2cac69),
-                            contentPadding: EdgeInsets.zero,
-                            onChanged: (value) {
-                              setState(() {
-                                _motivationAnswer = value;
-                              });
-                            },
-                          ),
-                          RadioListTile<String>(
-                            title: const Text('Tidak Setuju'),
-                            value: 'Tidak Setuju',
-                            groupValue: _motivationAnswer,
-                            activeColor: const Color(0xFF2cac69),
-                            contentPadding: EdgeInsets.zero,
-                            onChanged: (value) {
-                              setState(() {
-                                _motivationAnswer = value;
-                              });
-                            },
-                          ),
-                          RadioListTile<String>(
-                            title: const Text('Sangat tidak setuju'),
-                            value: 'Sangat tidak setuju',
-                            groupValue: _motivationAnswer,
-                            activeColor: const Color(0xFF2cac69),
-                            contentPadding: EdgeInsets.zero,
-                            onChanged: (value) {
-                              setState(() {
-                                _motivationAnswer = value;
-                              });
-                            },
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          // Question 2
-                          const Text(
-                            'Seberapa sering anda membuang sampah pada tempat sampah yang telah ditentukan?',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Radio buttons for question 2
-                          RadioListTile<String>(
-                            title: const Text('Selalu'),
-                            value: 'Selalu',
-                            groupValue: _separationAnswer,
-                            activeColor: const Color(0xFF2cac69),
-                            contentPadding: EdgeInsets.zero,
-                            onChanged: (value) {
-                              setState(() {
-                                _separationAnswer = value;
-                              });
-                            },
-                          ),
-                          RadioListTile<String>(
-                            title: const Text('Sering'),
-                            value: 'Sering',
-                            groupValue: _separationAnswer,
-                            activeColor: const Color(0xFF2cac69),
-                            contentPadding: EdgeInsets.zero,
-                            onChanged: (value) {
-                              setState(() {
-                                _separationAnswer = value;
-                              });
-                            },
-                          ),
-                          RadioListTile<String>(
-                            title: const Text('Jarang'),
-                            value: 'Jarang',
-                            groupValue: _separationAnswer,
-                            activeColor: const Color(0xFF2cac69),
-                            contentPadding: EdgeInsets.zero,
-                            onChanged: (value) {
-                              setState(() {
-                                _separationAnswer = value;
-                              });
-                            },
-                          ),
-                          RadioListTile<String>(
-                            title: const Text('Tidak pernah'),
-                            value: 'Tidak pernah',
-                            groupValue: _separationAnswer,
-                            activeColor: const Color(0xFF2cac69),
-                            contentPadding: EdgeInsets.zero,
-                            onChanged: (value) {
-                              setState(() {
-                                _separationAnswer = value;
-                              });
-                            },
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          // Question 3
-                          const Text(
-                            'Apakah menurut mulailkah perlu diberi hadiah akan kebiasaan membuang sampah secara benar?',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Radio buttons for question 3
-                          RadioListTile<String>(
-                            title: const Text('Ya, sangat'),
-                            value: 'Ya, sangat',
-                            groupValue: _knowledgeAnswer,
-                            activeColor: const Color(0xFF2cac69),
-                            contentPadding: EdgeInsets.zero,
-                            onChanged: (value) {
-                              setState(() {
-                                _knowledgeAnswer = value;
-                              });
-                            },
-                          ),
-                          RadioListTile<String>(
-                            title: const Text('Ya, cukup'),
-                            value: 'Ya, cukup',
-                            groupValue: _knowledgeAnswer,
-                            activeColor: const Color(0xFF2cac69),
-                            contentPadding: EdgeInsets.zero,
-                            onChanged: (value) {
-                              setState(() {
-                                _knowledgeAnswer = value;
-                              });
-                            },
-                          ),
-                          RadioListTile<String>(
-                            title: const Text('Tidak cukup'),
-                            value: 'Tidak cukup',
-                            groupValue: _knowledgeAnswer,
-                            activeColor: const Color(0xFF2cac69),
-                            contentPadding: EdgeInsets.zero,
-                            onChanged: (value) {
-                              setState(() {
-                                _knowledgeAnswer = value;
-                              });
-                            },
-                          ),
-                          RadioListTile<String>(
-                            title: const Text('Tidak perlu'),
-                            value: 'Tidak perlu',
-                            groupValue: _knowledgeAnswer,
-                            activeColor: const Color(0xFF2cac69),
-                            contentPadding: EdgeInsets.zero,
-                            onChanged: (value) {
-                              setState(() {
-                                _knowledgeAnswer = value;
-                              });
-                            },
-                          ),
-
-                          const SizedBox(height: 30),
-
-                          // Submit button
-                          SizedBox(
-                            width: double.infinity,
-                            height: 50,
-                            child: ElevatedButton(
-                              onPressed: (_motivationAnswer != null &&
-                                      _separationAnswer != null &&
-                                      _knowledgeAnswer != null &&
-                                      !_isSubmitting)
-                                  ? _submitSurvey
-                                  : null,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF2cac69),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                elevation: 0,
-                              ),
-                              child: _isSubmitting
-                                  ? const CircularProgressIndicator(
-                                      color: Colors.white)
-                                  : const Text(
-                                      'Submit Survey',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                            ),
-                          ),
-                        ],
+              child: FutureBuilder<void>(
+                // Use the Future variable here
+                future: _surveyStatusFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    // Show loading indicator
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF2cac69),
                       ),
-                    ),
+                    );
+                  } else if (snapshot.hasError) {
+                    // Show error message
+                    return Center(
+                      child: Text(
+                        'Terjadi kesalahan: ${snapshot.error}',
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontSize: 16,
+                        ),
+                      ),
+                    );
+                  } else {
+                    // Show the survey content
+                    return _hasCompletedSurvey
+                        ? _buildCompletedSurveyCard()
+                        : SingleChildScrollView(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Question 1
+                                const Text(
+                                  'Apakah anda memiliki niat yang kuat untuk membuang sampah pada tempatnya?',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+
+                                // Radio buttons for question 1
+                                RadioListTile<String>(
+                                  title: const Text('Sangat Setuju'),
+                                  value: 'Sangat Setuju',
+                                  groupValue: _motivationAnswer,
+                                  activeColor: const Color(0xFF2cac69),
+                                  contentPadding: EdgeInsets.zero,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _motivationAnswer = value;
+                                    });
+                                  },
+                                ),
+                                RadioListTile<String>(
+                                  title: const Text('Setuju'),
+                                  value: 'Setuju',
+                                  groupValue: _motivationAnswer,
+                                  activeColor: const Color(0xFF2cac69),
+                                  contentPadding: EdgeInsets.zero,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _motivationAnswer = value;
+                                    });
+                                  },
+                                ),
+                                RadioListTile<String>(
+                                  title: const Text('Tidak Setuju'),
+                                  value: 'Tidak Setuju',
+                                  groupValue: _motivationAnswer,
+                                  activeColor: const Color(0xFF2cac69),
+                                  contentPadding: EdgeInsets.zero,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _motivationAnswer = value;
+                                    });
+                                  },
+                                ),
+                                RadioListTile<String>(
+                                  title: const Text('Sangat tidak setuju'),
+                                  value: 'Sangat tidak setuju',
+                                  groupValue: _motivationAnswer,
+                                  activeColor: const Color(0xFF2cac69),
+                                  contentPadding: EdgeInsets.zero,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _motivationAnswer = value;
+                                    });
+                                  },
+                                ),
+
+                                const SizedBox(height: 24),
+
+                                // Question 2
+                                const Text(
+                                  'Seberapa sering anda membuang sampah pada tempat sampah yang telah ditentukan?',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+
+                                // Radio buttons for question 2
+                                RadioListTile<String>(
+                                  title: const Text('Selalu'),
+                                  value: 'Selalu',
+                                  groupValue: _separationAnswer,
+                                  activeColor: const Color(0xFF2cac69),
+                                  contentPadding: EdgeInsets.zero,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _separationAnswer = value;
+                                    });
+                                  },
+                                ),
+                                RadioListTile<String>(
+                                  title: const Text('Sering'),
+                                  value: 'Sering',
+                                  groupValue: _separationAnswer,
+                                  activeColor: const Color(0xFF2cac69),
+                                  contentPadding: EdgeInsets.zero,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _separationAnswer = value;
+                                    });
+                                  },
+                                ),
+                                RadioListTile<String>(
+                                  title: const Text('Jarang'),
+                                  value: 'Jarang',
+                                  groupValue: _separationAnswer,
+                                  activeColor: const Color(0xFF2cac69),
+                                  contentPadding: EdgeInsets.zero,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _separationAnswer = value;
+                                    });
+                                  },
+                                ),
+                                RadioListTile<String>(
+                                  title: const Text('Tidak pernah'),
+                                  value: 'Tidak pernah',
+                                  groupValue: _separationAnswer,
+                                  activeColor: const Color(0xFF2cac69),
+                                  contentPadding: EdgeInsets.zero,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _separationAnswer = value;
+                                    });
+                                  },
+                                ),
+
+                                const SizedBox(height: 24),
+
+                                // Question 3
+                                const Text(
+                                  'Apakah menurut mulailkah perlu diberi hadiah akan kebiasaan membuang sampah secara benar?',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+
+                                // Radio buttons for question 3
+                                RadioListTile<String>(
+                                  title: const Text('Ya, sangat'),
+                                  value: 'Ya, sangat',
+                                  groupValue: _knowledgeAnswer,
+                                  activeColor: const Color(0xFF2cac69),
+                                  contentPadding: EdgeInsets.zero,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _knowledgeAnswer = value;
+                                    });
+                                  },
+                                ),
+                                RadioListTile<String>(
+                                  title: const Text('Ya, cukup'),
+                                  value: 'Ya, cukup',
+                                  groupValue: _knowledgeAnswer,
+                                  activeColor: const Color(0xFF2cac69),
+                                  contentPadding: EdgeInsets.zero,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _knowledgeAnswer = value;
+                                    });
+                                  },
+                                ),
+                                RadioListTile<String>(
+                                  title: const Text('Tidak cukup'),
+                                  value: 'Tidak cukup',
+                                  groupValue: _knowledgeAnswer,
+                                  activeColor: const Color(0xFF2cac69),
+                                  contentPadding: EdgeInsets.zero,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _knowledgeAnswer = value;
+                                    });
+                                  },
+                                ),
+                                RadioListTile<String>(
+                                  title: const Text('Tidak perlu'),
+                                  value: 'Tidak perlu',
+                                  groupValue: _knowledgeAnswer,
+                                  activeColor: const Color(0xFF2cac69),
+                                  contentPadding: EdgeInsets.zero,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _knowledgeAnswer = value;
+                                    });
+                                  },
+                                ),
+
+                                const SizedBox(height: 30),
+
+                                // Submit button
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 50,
+                                  child: ElevatedButton(
+                                    onPressed: (_motivationAnswer != null &&
+                                            _separationAnswer != null &&
+                                            _knowledgeAnswer != null &&
+                                            !_isSubmitting)
+                                        ? _submitSurvey
+                                        : null,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF2cac69),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      elevation: 0,
+                                    ),
+                                    child: _isSubmitting
+                                        ? const CircularProgressIndicator(
+                                            color: Colors.white)
+                                        : const Text(
+                                            'Submit Survey',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                  }
+                },
+              ),
             ),
           ),
         ],
