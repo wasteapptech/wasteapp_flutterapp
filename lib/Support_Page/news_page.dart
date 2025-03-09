@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
@@ -140,7 +139,7 @@ Future<void> fetchNews() async {
               ),
             ),
           ),
-         Positioned(
+          Positioned(
             bottom: 0,
             left: 0,
             right: 0,

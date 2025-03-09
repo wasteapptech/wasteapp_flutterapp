@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wasteapptest/Support_Page/news_page.dart';
+import 'package:wasteapptest/Survey_Page/survey.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -135,24 +136,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                  ),
-                  child: Column(
-                    children: [
-                      _buildInfoCard(
-                        'Survei',
-                        'Mohon isi survei berikut untuk membantu kami mengembangkan aplikasi ini',
-                      ),
-                      const SizedBox(height: 16),
-                      _buildInfoCard(
-                        'Admin',
-                        'Hanya admin yang bisa mengakses fitur ini',
-                      ),
-                      const SizedBox(height: 80),
-                    ],
-                  ),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Column(
+                  children: [
+                    _buildInfoCard(
+                      'Survei', // Title
+                      'Mohon isi survei berikut untuk membantu kami mengembangkan aplikasi ini', // Description
+                      context, // BuildContext
+                    ),
+                    const SizedBox(height: 16),
+                    _buildInfoCard(
+                      'Admin', // Title
+                      'Hanya admin yang bisa mengakses fitur ini', // Description
+                      context, // BuildContext
+                    ),
+                    const SizedBox(height: 80),
+                  ],
                 ),
+              ),
               ],
             ),
           ),
@@ -183,7 +184,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      // Home button
                       Expanded(
                         child: InkWell(
                           onTap: () => _onItemTapped(0, context),
@@ -385,7 +385,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Icon(
               icon,
               size: 50,
-              color: Color(0xFF88C9A2),
+              color: const Color(0xFF88C9A2),
             ),
           ),
           const SizedBox(height: 12),
@@ -403,34 +403,56 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildInfoCard(String title, String description) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xfff7fef9),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFedf9f4), width: 2),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
+  Widget _buildInfoCard(
+      String title, String description, BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const SurveyPage(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+              const begin = Offset(1.0, 0.0);
+              const end = Offset.zero;
+              const curve = Curves.easeInOut;
+              var tween =
+                  Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+              var offsetAnimation = animation.drive(tween);
+              return SlideTransition(position: offsetAnimation, child: child);
+            },
+            transitionDuration: const Duration(milliseconds: 300),
           ),
-          const SizedBox(height: 8),
-          Text(
-            description,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.black54,
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xfff7fef9),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFedf9f4), width: 2),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              description,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.black54,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
