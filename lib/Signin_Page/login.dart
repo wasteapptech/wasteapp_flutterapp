@@ -24,7 +24,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   bool _isPasswordVisible = false;
 
-Future<void> _signin() async {
+ Future<void> _signin() async {
   setState(() {
     _isLoading = true;
   });
@@ -49,18 +49,19 @@ Future<void> _signin() async {
       body: json.encode({'name': name, 'password': password}),
     );
 
-    if (response.statusCode == 201) {
-      final responseData = json.decode(response.body);
-      final prefs = await SharedPreferences.getInstance();
-    
-      await prefs.setBool('isLoggedIn', true);
-      if (responseData['email'] != null) {
-        await prefs.setString('userEmail', responseData['email']);
-      } else {
-        await prefs.setString('userEmail', name);
-      }
-      
-      await _showSuccessDialog();
+  if (response.statusCode == 201) {
+    final responseData = json.decode(response.body);
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setBool('isLoggedIn', true);
+    await prefs.setString('userName', name); // Simpan username
+    if (responseData['email'] != null) {
+      await prefs.setString('userEmail', responseData['email']);
+    } else {
+      await prefs.setString('userEmail', name); // Jika email tidak ada, gunakan nama
+    }
+
+    await _showSuccessDialog();
     } else {
       final responseBody = json.decode(response.body);
       _showErrorDialog(responseBody['error'] ?? 'SignIn gagal');
@@ -103,7 +104,7 @@ Future<void> _signin() async {
               mainAxisSize: MainAxisSize.min,
               children: [
                 SvgPicture.asset(
-                  'assets/svg/error-svgrepo-com.svg',
+                  'assets/svg/confused-face-svgrepo-com.svg',
                   width: 50,
                   height: 50,
                 ),
@@ -211,69 +212,70 @@ Future<void> _signin() async {
   }
 
   Future<void> _showSuccessDialog() async {
-  return showDialog(
-    context: context,
-    builder: (ctx) => Center(
-      child: Card(
-        elevation: 10,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SvgPicture.asset(
-                'assets/svg/success-svgrepo-com.svg',
-                width: 50,
-                height: 50,
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'SignIn Success',
-                style: TextStyle(
-                  fontSize: 20,
-                  color: Colors.black,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'Poppins',
+    return showDialog(
+      context: context,
+      builder: (ctx) => Center(
+        child: Card(
+          elevation: 10,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SvgPicture.asset(
+                  'assets/svg/success-svgrepo-com.svg',
+                  width: 50,
+                  height: 50,
                 ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Kamu berhasil login',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black,
-                  fontFamily: 'Poppins',
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(ctx).pop();
-                  Navigator.pushReplacement( 
-                    context,
-                    MaterialPageRoute(builder: (context) => const DashboardScreen()),
-                  );
-                },
-                child: const Text(
-                  'Done',
+                const SizedBox(height: 20),
+                const Text(
+                  'SignIn Success',
                   style: TextStyle(
-                    fontSize: 15,
-                    color: Color(0xFF2cac69),
+                    fontSize: 20,
+                    color: Colors.black,
                     fontWeight: FontWeight.w700,
                     fontFamily: 'Poppins',
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 10),
+                const Text(
+                  'Kamu berhasil login',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.black,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+                const SizedBox(height: 20),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const DashboardScreen()),
+                    );
+                  },
+                  child: const Text(
+                    'Done',
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Color(0xFF2cac69),
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

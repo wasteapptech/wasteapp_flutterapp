@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:wasteapptest/Profile_Page/profile.dart';
 import 'package:wasteapptest/Support_Page/news_page.dart';
-import 'package:wasteapptest/Survey_Page/survey.dart';
+import 'package:wasteapptest/Dasboard_Page/survey.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -37,7 +38,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         // Tambahkan navigasi untuk halaman Statistics
         break;
       case 4:
-        // Tambahkan navigasi untuk halaman Profile
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const ProfilePage()),
+        );
         break;
     }
   }

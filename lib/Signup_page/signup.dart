@@ -68,8 +68,6 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
-  
-
   void _showNoInputDialog() {
     showDialog(
       context: context,
@@ -85,7 +83,7 @@ class _SignupScreenState extends State<SignupScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 SvgPicture.asset(
-                  'assets/svg/error-svgrepo-com.svg',
+                  'assets/svg/confused-face-svgrepo-com.svg',
                   width: 50,
                   height: 50,
                 ),
@@ -131,70 +129,71 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-void _showSuccessDialog() {
-  showDialog(
-    context: context,
-    builder: (ctx) => Center(
-      child: Card(
-        elevation: 10,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SvgPicture.asset(
-                'assets/svg/success-svgrepo-com.svg',
-                width: 50,
-                height: 50,
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Pendaftaran Berhasil',
-                style: TextStyle(
-                  fontSize: 20,
-                  color: Colors.black,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'Poppins',
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => Center(
+        child: Card(
+          elevation: 10,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SvgPicture.asset(
+                  'assets/svg/success-svgrepo-com.svg',
+                  width: 50,
+                  height: 50,
                 ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Akun Anda berhasil terdaftar.',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black,
-                  fontFamily: 'Poppins',
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(ctx).pop(); 
-                  Navigator.pushReplacement( 
-                    context,
-                    MaterialPageRoute(builder: (context) => const LoginPage()), 
-                  );
-                },
-                child: const Text(
-                  'Done',
+                const SizedBox(height: 20),
+                const Text(
+                  'Pendaftaran Berhasil',
                   style: TextStyle(
-                    fontSize: 15,
-                    color: Color(0xFF2cac69),
+                    fontSize: 20,
+                    color: Colors.black,
                     fontWeight: FontWeight.w700,
                     fontFamily: 'Poppins',
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 10),
+                const Text(
+                  'Akun Anda berhasil terdaftar.',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.black,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+                const SizedBox(height: 20),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const LoginPage()),
+                    );
+                  },
+                  child: const Text(
+                    'Done',
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Color(0xFF2cac69),
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   void _showErrorDialog(String message) {
     showDialog(

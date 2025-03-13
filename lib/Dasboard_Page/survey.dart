@@ -19,13 +19,11 @@ class _SurveyPageState extends State<SurveyPage> {
   bool _hasCompletedSurvey = false;
   String? _userEmail;
 
-  // Add a Future variable to store the result of _checkSurveyStatus
   late Future<void> _surveyStatusFuture;
 
   @override
   void initState() {
     super.initState();
-    // Initialize the Future variable in initState
     _surveyStatusFuture = _checkSurveyStatus();
   }
 
