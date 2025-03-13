@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:wasteapptest/Dasboard_Page/dashboard.dart';
 import 'package:wasteapptest/Signin_Page/login.dart';
+import 'package:wasteapptest/Support_Page/about_page.dart';
 import 'package:wasteapptest/Support_Page/news_page.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -255,7 +256,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 const SizedBox(height: 20),
                 TextButton(
                   onPressed: () {
-                    Navigator.of(ctx).pop(); // Tutup dialog sukses
+                    Navigator.of(ctx).pop();
                   },
                   child: const Text(
                     'Done',
@@ -435,29 +436,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  void _showLogoutConfirmationDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _logout();
-            },
-            child: const Text('Logout', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _onItemTapped(int index, BuildContext context) {
     setState(() {
       _selectedIndex = index;
@@ -495,148 +473,231 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFEFEFE),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF2cac69),
-        title: const Text(
-          'Profile',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(20),
-          ),
-        ),
-        automaticallyImplyLeading: false,
-      ),
       body: Stack(
         children: [
           isLoading
               ? const Center(
-                  child: CircularProgressIndicator(color: Color(0xFF2cac69)))
+                  child: CircularProgressIndicator(color: Color(0xFF2cac69)),
+                )
               : SingleChildScrollView(
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        const SizedBox(height: 20),
-                        // Profile Picture Section
-                        Center(
-                          child: Stack(
-                            children: [
-                              CircleAvatar(
-                                radius: 60,
-                                backgroundColor: Colors.grey[200],
-                                backgroundImage: _image != null
-                                    ? FileImage(_image!)
-                                    : const AssetImage(
-                                            'assets/images/TU-logogram.webp')
-                                        as ImageProvider,
+                        const SizedBox(height: 40),
+                        const Row(
+                          children: [
+                            SizedBox(width: 8),
+                            Text(
+                              'Profile',
+                              style: TextStyle(
+                                color: Color(0xFF2cac69),
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
                               ),
-                              Positioned(
-                                bottom: 0,
-                                right: 0,
-                                child: GestureDetector(
-                                  onTap: _pickImage,
-                                  child: Container(
-                                    height: 40,
-                                    width: 40,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFF2cac69),
-                                      shape: BoxShape.circle,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+
+                        Center(
+                          child: Column(
+                            children: [
+                              Stack(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 50,
+                                    backgroundColor: Colors.grey[200],
+                                    backgroundImage: _image != null
+                                        ? FileImage(_image!)
+                                        : const AssetImage(
+                                                'assets/images/TU-logogram.webp')
+                                            as ImageProvider,
+                                  ),
+                                  Positioned(
+                                    bottom: 0,
+                                    right: 0,
+                                    child: GestureDetector(
+                                      onTap: _pickImage,
+                                      child: Container(
+                                        height: 30,
+                                        width: 30,
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFF2cac69),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.camera_alt,
+                                          color: Colors.white,
+                                          size: 18,
+                                        ),
+                                      ),
                                     ),
-                                    child: const Icon(
-                                      Icons.camera_alt,
-                                      color: Colors.white,
-                                      size: 20,
-                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                userData['name'] ??
+                                    'User Name', // Tampilkan nama dari userData
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: _showEditProfileDialog,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF2cac69),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                  minimumSize: const Size(150, 46),
+                                ),
+                                child: const Text(
+                                  'Edit',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          userData['name'] ??
-                              'User Name', // Tampilkan nama dari userData
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          userData['email'] ??
-                              'Waste@example.com', // Tampilkan email dari userData
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 30),
 
-                        // Profile Sections
-                        _buildSectionCard(
-                          title: 'Personal Information',
-                          icon: Icons.person,
-                          onTap: _showEditProfileDialog,
-                          subtitle: 'Edit your profile information',
-                        ),
-
-                        _buildSectionCard(
-                          title: 'Security',
-                          icon: Icons.security,
-                          onTap: _showResetPasswordDialog,
-                          subtitle: 'Change your password',
-                        ),
-
-                        _buildSectionCard(
-                          title: 'About',
-                          icon: Icons.info_outline,
-                          onTap: () {
-                            // Show app information
-                            showDialog(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text('About WasteApp'),
-                                content: const Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('WasteApp v1.0.0'),
-                                    SizedBox(height: 8),
-                                    Text(
-                                        'A sustainable waste management solution'),
-                                    SizedBox(height: 8),
-                                    Text('© 2025 WasteApp Team'),
-                                  ],
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context),
-                                    child: const Text('Close'),
-                                  ),
-                                ],
+                        // Account Section
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
                               ),
-                            );
-                          },
-                          subtitle: 'Application information',
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Account',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF2cac69),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              // Personal Data
+                              ListTile(
+                                leading: const Icon(Icons.person,
+                                    color: Color(0xFF2cac69)),
+                                title: const Text('Personal Data'),
+                                trailing: const Icon(Icons.chevron_right,
+                                    color: Colors.grey),
+                                onTap: _showEditProfileDialog,
+                              ),
+                              const Divider(),
+                              // Update Password
+                              ListTile(
+                                leading: const Icon(Icons.lock,
+                                    color: Color(0xFF2cac69)),
+                                title: const Text('Update Password'),
+                                trailing: const Icon(Icons.chevron_right,
+                                    color: Colors.grey),
+                                onTap: _showResetPasswordDialog,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Other Section
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Other',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF2cac69),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              // Support
+                              ListTile(
+                                leading: const Icon(Icons.info,
+                                    color: Color(0xFF2cac69)),
+                                title: const Text('About'),
+                                trailing: const Icon(Icons.chevron_right,
+                                    color: Colors.grey),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const AboutPage(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
                         ),
 
-                        _buildSectionCard(
-                          title: 'Logout',
-                          icon: Icons.logout,
-                          onTap: _showLogoutConfirmationDialog,
-                          subtitle: 'Sign out from your account',
-                          isLogout: true,
+                        const SizedBox(height: 24),
+                        Center(
+                          child: Text(
+                            'Version App v1.0.4',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
                         ),
-
-                        const SizedBox(
-                            height: 100), // For bottom navigation bar space
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _logout,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2cac69),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            minimumSize: const Size(double.infinity, 50),
+                          ),
+                          child: const Text(
+                            'Logout',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 80),
                       ],
                     ),
                   ),
@@ -853,55 +914,6 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSectionCard({
-    required String title,
-    required IconData icon,
-    required VoidCallback onTap,
-    required String subtitle,
-    bool isLogout = false,
-  }) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: ListTile(
-        onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: isLogout ? Colors.red[50] : const Color(0xFFE8F5E9),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
-            icon,
-            color: isLogout ? Colors.red : const Color(0xFF2cac69),
-          ),
-        ),
-        title: Text(
-          title,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: isLogout ? Colors.red : Colors.black87,
-          ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: TextStyle(
-            color: Colors.grey[600],
-          ),
-        ),
-        trailing: const Icon(
-          Icons.arrow_forward_ios,
-          size: 16,
-          color: Colors.grey,
-        ),
       ),
     );
   }
