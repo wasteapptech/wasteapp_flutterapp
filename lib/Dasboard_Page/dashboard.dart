@@ -156,7 +156,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       _buildMenuCard(
                         'Tempat Sampah Terdekat',
                         Icons.location_on_outlined,
-                        Colors.blue, // Different color for each card
+                        Colors.blue, 
                       ),
                       _buildMenuCard(
                         'Hasil Transaksi Sampah',
@@ -177,7 +177,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
 
-                // Information Cards Section
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Column(
@@ -185,7 +184,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       _buildSurveyCard(context),
                       const SizedBox(height: 16),
                       _buildAdminCard(context),
-                      const SizedBox(height: 80), // Space for bottom navigation
+                      const SizedBox(height: 80),
                     ],
                   ),
                 ),
