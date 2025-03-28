@@ -12,7 +12,6 @@ class SurveyPage extends StatefulWidget {
 }
 
 class _SurveyPageState extends State<SurveyPage> {
-  // Updated to include more answers to match new questions
   String? _q1Answer;
   String? _q2Answer;
   String? _q3Answer;
@@ -270,7 +269,8 @@ class _SurveyPageState extends State<SurveyPage> {
   Widget _buildCompletedSurveyCard() {
     return Center(
       child: Card(
-        elevation: 5,
+        color: Colors.white,
+        elevation: 0, // Set to 0 since we're using custom BoxShadow
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),

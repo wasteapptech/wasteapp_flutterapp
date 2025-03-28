@@ -37,7 +37,7 @@ class AboutPage extends StatelessWidget {
 
               Center(
                 child: Image.asset(
-                  'assets/images/logo.png', 
+                  'assets/images/logo1.png', 
                   height: 100,
                   width: 100,
                 ),

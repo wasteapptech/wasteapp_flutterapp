@@ -15,6 +15,7 @@ dependencies:
   intl: ^0.18.1
   shimmer: ^3.0.0
   shared_preferences: ^2.5.2
+  url_launcher: ^6.2.1
   image_picker: ^0.8.4+4
   fluttertoast: ^8.0.9
 

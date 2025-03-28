@@ -417,19 +417,11 @@ class _AdminPageState extends State<AdminPage> {
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.green.withOpacity(0.2),
-                    spreadRadius: 2,
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  )
-                ],
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(20),
                 child: Image.asset(
-                  'assets/images/logo.png',
+                  'assets/images/logo1.png',
                   height: 120,
                   width: 120,
                   fit: BoxFit.cover,

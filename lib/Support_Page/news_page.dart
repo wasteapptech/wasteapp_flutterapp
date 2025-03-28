@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:wasteapptest/Dasboard_Page/dashboard.dart';
 import 'package:wasteapptest/Profile_Page/profile.dart';
 
@@ -15,13 +17,16 @@ class NewsPage extends StatefulWidget {
 
 class _NewsPageState extends State<NewsPage> {
   List<Map<String, dynamic>> newsItems = [];
-  bool isLoading = true;
+  List<Map<String, dynamic>> kegiatanItems = [];
+  bool isLoadingNews = true;
+  bool isLoadingKegiatan = true;
   int _selectedIndex = 1;
 
   @override
   void initState() {
     super.initState();
     fetchNews();
+    fetchKegiatan();
   }
 
   Future<void> fetchNews() async {
@@ -42,19 +47,155 @@ class _NewsPageState extends State<NewsPage> {
             newsItems = List<Map<String, dynamic>>.from(data['articles'])
                 .take(5)
                 .toList();
-            isLoading = false;
+            isLoadingNews = false;
           });
         }
       } else {
-        throw Exception('Failed to load news');
+        throw Exception('Gagal memuat berita');
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          isLoading = false;
+          isLoadingNews = false;
         });
+        _showErrorDialog('Gagal memuat berita. Silakan coba lagi nanti.');
       }
     }
+  }
+
+  Future<void> fetchKegiatan() async {
+    const url = 'https://api-wasteapp.vercel.app/api/kegiatan';
+
+    try {
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (mounted) {
+          setState(() {
+            kegiatanItems =
+                List<Map<String, dynamic>>.from(data).take(3).toList();
+            isLoadingKegiatan = false;
+          });
+        }
+      } else {
+        throw Exception('Gagal memuat kegiatan');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isLoadingKegiatan = false;
+        });
+        _showErrorDialog('Gagal memuat kegiatan. Silakan coba lagi nanti.');
+      }
+    }
+  }
+
+  Future<void> _launchURL(String? url) async {
+    if (url == null || url.isEmpty) {
+      _showErrorDialog('Tidak dapat membuka tautan');
+      return;
+    }
+
+    try {
+      final Uri uri = Uri.parse(url);
+
+      // Try different launch modes
+      final List<LaunchMode> launchModes = [
+        LaunchMode.externalApplication,
+        LaunchMode.inAppWebView,
+        LaunchMode.platformDefault
+      ];
+
+      bool launched = false;
+      for (var mode in launchModes) {
+        try {
+          launched = await launchUrl(
+            uri,
+            mode: mode,
+            webViewConfiguration: const WebViewConfiguration(
+              enableDomStorage: true,
+              enableJavaScript: true,
+            ),
+          );
+
+          if (launched) break;
+        } catch (launchError) {
+          print('Error launching URL with mode $mode: $launchError');
+        }
+      }
+
+      if (!launched) {
+        print('Failed to launch URL: $url');
+        _showErrorDialog('Tidak dapat membuka tautan');
+      }
+    } catch (e) {
+      print('URL parsing error: $e');
+      _showErrorDialog(
+          'Terjadi kesalahan saat membuka tautan: ${e.toString()}');
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Center(
+        child: Card(
+          elevation: 10,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SvgPicture.asset(
+                  'assets/svg/error-svgrepo-com.svg',
+                  width: 50,
+                  height: 50,
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Terjadi Kesalahan',
+                  style: TextStyle(
+                    fontSize: 20,
+                    color: Colors.black,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.black,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+                const SizedBox(height: 20),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                  },
+                  child: Text(
+                    'Tutup',
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.green[700],
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void _onItemTapped(int index, BuildContext context) {
@@ -111,7 +252,9 @@ class _NewsPageState extends State<NewsPage> {
       body: Stack(
         children: [
           RefreshIndicator(
-            onRefresh: fetchNews,
+            onRefresh: () async {
+              await Future.wait([fetchNews(), fetchKegiatan()]);
+            },
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               child: Padding(
@@ -119,6 +262,7 @@ class _NewsPageState extends State<NewsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Berita Hari Ini Section
                     const Text(
                       'Berita Hari Ini',
                       style: TextStyle(
@@ -128,13 +272,13 @@ class _NewsPageState extends State<NewsPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    if (isLoading)
+                    if (isLoadingNews)
                       Column(
                         children: List.generate(
                             5, (_) => _buildNewsCardSkeleton(context)),
                       )
                     else if (newsItems.isEmpty)
-                      _buildEmptyState()
+                      _buildEmptyState(title: 'Tidak ada berita tersedia')
                     else
                       Column(
                         children: [
@@ -144,6 +288,36 @@ class _NewsPageState extends State<NewsPage> {
                               ))
                         ],
                       ),
+
+                    const SizedBox(height: 24),
+
+                    // Kegiatan Hari Ini Section
+                    const Text(
+                      'Kegiatan Hari Ini',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    if (isLoadingKegiatan)
+                      Column(
+                        children: List.generate(
+                            3, (_) => _buildKegiatanCardSkeleton(context)),
+                      )
+                    else if (kegiatanItems.isEmpty)
+                      _buildEmptyState(title: 'Tidak ada kegiatan tersedia')
+                    else
+                      Column(
+                        children: [
+                          ...kegiatanItems.map((kegiatan) => Padding(
+                                padding: const EdgeInsets.only(bottom: 16),
+                                child: _buildKegiatanCard(kegiatan),
+                              ))
+                        ],
+                      ),
+
                     const SizedBox(height: 80),
                   ],
                 ),
@@ -170,9 +344,7 @@ class _NewsPageState extends State<NewsPage> {
       elevation: 2,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          // Add navigation to article detail
-        },
+        onTap: () => _launchURL(article['url']),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -219,7 +391,7 @@ class _NewsPageState extends State<NewsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    article['title'] ?? 'No Title',
+                    article['title'] ?? 'Tidak ada judul',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -230,7 +402,7 @@ class _NewsPageState extends State<NewsPage> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    article['description'] ?? 'No Description',
+                    article['description'] ?? 'Tidak ada deskripsi',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey[600],
@@ -243,7 +415,7 @@ class _NewsPageState extends State<NewsPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        article['source']['name'] ?? 'Unknown Source',
+                        article['source']['name'] ?? 'Sumber tidak diketahui',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.green[700],
@@ -260,6 +432,125 @@ class _NewsPageState extends State<NewsPage> {
                     ],
                   ),
                 ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildKegiatanCard(Map<String, dynamic> kegiatan) {
+    final DateTime? tanggal = DateTime.tryParse(kegiatan['tanggal'] ?? '');
+    final String formattedDate = tanggal != null
+        ? DateFormat('dd MMM yyyy').format(tanggal)
+        : 'Tanggal tidak tersedia';
+
+    return Material(
+      borderRadius: BorderRadius.circular(12),
+      elevation: 2,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          // Add navigation to kegiatan detail if needed
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.green[50],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.event,
+                      color: Colors.green[700],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          kegiatan['nama'] ?? 'Kegiatan tanpa nama',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          formattedDate,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                kegiatan['deskripsi'] ?? 'Tidak ada deskripsi kegiatan',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[800],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState({required String title}) {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
+        width: double.infinity,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.article_outlined,
+              size: 60,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: () {
+                if (title.contains('berita')) {
+                  fetchNews();
+                } else {
+                  fetchKegiatan();
+                }
+              },
+              child: const Text(
+                'Coba Lagi',
+                style: TextStyle(
+                  color: Color(0xFF2cac69),
+                ),
               ),
             ),
           ],
@@ -333,36 +624,67 @@ class _NewsPageState extends State<NewsPage> {
     );
   }
 
-  Widget _buildEmptyState() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 40),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.article_outlined,
-            size: 60,
-            color: Colors.grey[400],
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Tidak ada berita tersedia',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey,
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextButton(
-            onPressed: fetchNews,
-            child: const Text(
-              'Coba Lagi',
-              style: TextStyle(
-                color: Color(0xFF2cac69),
+  Widget _buildKegiatanCardSkeleton(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          height: 20,
+                          width: double.infinity,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          height: 16,
+                          width: 120,
+                          color: Colors.white,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ),
+              const SizedBox(height: 12),
+              Container(
+                height: 16,
+                width: double.infinity,
+                color: Colors.white,
+              ),
+              const SizedBox(height: 8),
+              Container(
+                height: 16,
+                width: 200,
+                color: Colors.white,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
