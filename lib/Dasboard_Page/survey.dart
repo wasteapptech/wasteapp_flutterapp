@@ -12,9 +12,18 @@ class SurveyPage extends StatefulWidget {
 }
 
 class _SurveyPageState extends State<SurveyPage> {
-  String? _motivationAnswer;
-  String? _separationAnswer;
-  String? _knowledgeAnswer;
+  // Updated to include more answers to match new questions
+  String? _q1Answer;
+  String? _q2Answer;
+  String? _q3Answer;
+  String? _q4Answer;
+  String? _q5Answer;
+  String? _q6Answer;
+  String? _q7Answer;
+  String? _q8Answer;
+  String? _q9Answer;
+  String? _q10Answer;
+
   bool _isSubmitting = false;
   bool _hasCompletedSurvey = false;
   String? _userEmail;
@@ -79,9 +88,16 @@ class _SurveyPageState extends State<SurveyPage> {
       final requestBody = {
         'email': _userEmail,
         'answers': {
-          'motivation': _motivationAnswer,
-          'separation': _separationAnswer,
-          'knowledge': _knowledgeAnswer,
+          'q1_responsibility': _q1Answer,
+          'q2_disposal_location': _q2Answer,
+          'q3_waste_separation_difficulty': _q3Answer,
+          'q4_waste_separation_importance': _q4Answer,
+          'q5_comfortable_with_separated_bins': _q5Answer,
+          'q6_app_understanding_help': _q6Answer,
+          'q7_technology_ease': _q7Answer,
+          'q8_incentive_motivation': _q8Answer,
+          'q9_progress_tracking': _q9Answer,
+          'q10_environmental_impact': _q10Answer,
         }
       };
 
@@ -112,6 +128,21 @@ class _SurveyPageState extends State<SurveyPage> {
         _isSubmitting = false;
       });
     }
+  }
+
+  // Method to create radio list tiles
+  List<RadioListTile<String>> _buildRadioListTiles(String? groupValue,
+      List<String> options, void Function(String?)? onChanged) {
+    return options
+        .map((option) => RadioListTile<String>(
+              title: Text(option),
+              value: option,
+              groupValue: groupValue,
+              activeColor: const Color(0xFF2cac69),
+              contentPadding: EdgeInsets.zero,
+              onChanged: onChanged,
+            ))
+        .toList();
   }
 
   void _showErrorDialog(String message) {
@@ -329,7 +360,7 @@ class _SurveyPageState extends State<SurveyPage> {
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Text(
-              'Survei ini bertujuan untuk memahami motivasi pengguna dalam memisahkan sampah serta yang mendorong kebisaaan membuang sampah secara benar',
+              'Survei ini bertujuan untuk memahami perilaku dan persepsi pengguna dalam pengelolaan sampah',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 14,
@@ -348,18 +379,15 @@ class _SurveyPageState extends State<SurveyPage> {
                 ),
               ),
               child: FutureBuilder<void>(
-                // Use the Future variable here
                 future: _surveyStatusFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    // Show loading indicator
                     return const Center(
                       child: CircularProgressIndicator(
                         color: Color(0xFF2cac69),
                       ),
                     );
                   } else if (snapshot.hasError) {
-                    // Show error message
                     return Center(
                       child: Text(
                         'Terjadi kesalahan: ${snapshot.error}',
@@ -370,7 +398,6 @@ class _SurveyPageState extends State<SurveyPage> {
                       ),
                     );
                   } else {
-                    // Show the survey content
                     return _hasCompletedSurvey
                         ? _buildCompletedSurveyCard()
                         : SingleChildScrollView(
@@ -379,187 +406,212 @@ class _SurveyPageState extends State<SurveyPage> {
                               children: [
                                 // Question 1
                                 const Text(
-                                  'Apakah anda memiliki niat yang kuat untuk membuang sampah pada tempatnya?',
+                                  '1. Apakah anda memiliki rasa tanggung jawab untuk membuang sampah pada tempatnya?',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
                                 const SizedBox(height: 12),
-
-                                // Radio buttons for question 1
-                                RadioListTile<String>(
-                                  title: const Text('Sangat Setuju'),
-                                  value: 'Sangat Setuju',
-                                  groupValue: _motivationAnswer,
-                                  activeColor: const Color(0xFF2cac69),
-                                  contentPadding: EdgeInsets.zero,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _motivationAnswer = value;
-                                    });
-                                  },
-                                ),
-                                RadioListTile<String>(
-                                  title: const Text('Setuju'),
-                                  value: 'Setuju',
-                                  groupValue: _motivationAnswer,
-                                  activeColor: const Color(0xFF2cac69),
-                                  contentPadding: EdgeInsets.zero,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _motivationAnswer = value;
-                                    });
-                                  },
-                                ),
-                                RadioListTile<String>(
-                                  title: const Text('Tidak Setuju'),
-                                  value: 'Tidak Setuju',
-                                  groupValue: _motivationAnswer,
-                                  activeColor: const Color(0xFF2cac69),
-                                  contentPadding: EdgeInsets.zero,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _motivationAnswer = value;
-                                    });
-                                  },
-                                ),
-                                RadioListTile<String>(
-                                  title: const Text('Sangat tidak setuju'),
-                                  value: 'Sangat tidak setuju',
-                                  groupValue: _motivationAnswer,
-                                  activeColor: const Color(0xFF2cac69),
-                                  contentPadding: EdgeInsets.zero,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _motivationAnswer = value;
-                                    });
-                                  },
-                                ),
-
-                                const SizedBox(height: 24),
+                                ..._buildRadioListTiles(
+                                    _q1Answer,
+                                    [
+                                      'Sangat Setuju',
+                                      'Setuju',
+                                      'Tidak Setuju',
+                                      'Sangat Tidak Setuju'
+                                    ],
+                                    (value) =>
+                                        setState(() => _q1Answer = value)),
 
                                 // Question 2
+                                const SizedBox(height: 24),
                                 const Text(
-                                  'Seberapa sering anda membuang sampah pada tempat sampah yang telah ditentukan?',
+                                  '2. Apakah anda sering membuang sampah pada tempat sampah yg telah disediakan?',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
                                 const SizedBox(height: 12),
-
-                                // Radio buttons for question 2
-                                RadioListTile<String>(
-                                  title: const Text('Selalu'),
-                                  value: 'Selalu',
-                                  groupValue: _separationAnswer,
-                                  activeColor: const Color(0xFF2cac69),
-                                  contentPadding: EdgeInsets.zero,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _separationAnswer = value;
-                                    });
-                                  },
-                                ),
-                                RadioListTile<String>(
-                                  title: const Text('Sering'),
-                                  value: 'Sering',
-                                  groupValue: _separationAnswer,
-                                  activeColor: const Color(0xFF2cac69),
-                                  contentPadding: EdgeInsets.zero,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _separationAnswer = value;
-                                    });
-                                  },
-                                ),
-                                RadioListTile<String>(
-                                  title: const Text('Jarang'),
-                                  value: 'Jarang',
-                                  groupValue: _separationAnswer,
-                                  activeColor: const Color(0xFF2cac69),
-                                  contentPadding: EdgeInsets.zero,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _separationAnswer = value;
-                                    });
-                                  },
-                                ),
-                                RadioListTile<String>(
-                                  title: const Text('Tidak pernah'),
-                                  value: 'Tidak pernah',
-                                  groupValue: _separationAnswer,
-                                  activeColor: const Color(0xFF2cac69),
-                                  contentPadding: EdgeInsets.zero,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _separationAnswer = value;
-                                    });
-                                  },
-                                ),
-
-                                const SizedBox(height: 24),
+                                ..._buildRadioListTiles(
+                                    _q2Answer,
+                                    [
+                                      'Sangat Setuju',
+                                      'Setuju',
+                                      'Tidak Setuju',
+                                      'Sangat Tidak Setuju'
+                                    ],
+                                    (value) =>
+                                        setState(() => _q2Answer = value)),
 
                                 // Question 3
+                                const SizedBox(height: 24),
                                 const Text(
-                                  'Apakah menurut mulailkah perlu diberi hadiah akan kebiasaan membuang sampah secara benar?',
+                                  '3. Apakah anda merasa kesulitan dalam membedakan sampah organik dan anorganik?',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
                                 const SizedBox(height: 12),
+                                ..._buildRadioListTiles(
+                                    _q3Answer,
+                                    [
+                                      'Sangat Setuju',
+                                      'Setuju',
+                                      'Tidak Setuju',
+                                      'Sangat Tidak Setuju'
+                                    ],
+                                    (value) =>
+                                        setState(() => _q3Answer = value)),
 
-                                // Radio buttons for question 3
-                                RadioListTile<String>(
-                                  title: const Text('Ya, sangat'),
-                                  value: 'Ya, sangat',
-                                  groupValue: _knowledgeAnswer,
-                                  activeColor: const Color(0xFF2cac69),
-                                  contentPadding: EdgeInsets.zero,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _knowledgeAnswer = value;
-                                    });
-                                  },
+                                // Question 4
+                                const SizedBox(height: 24),
+                                const Text(
+                                  '4. Apakah anda merasa penting untuk memisahkan sampah organik dan anorganik sebelum membuangnya?',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                                RadioListTile<String>(
-                                  title: const Text('Ya, cukup'),
-                                  value: 'Ya, cukup',
-                                  groupValue: _knowledgeAnswer,
-                                  activeColor: const Color(0xFF2cac69),
-                                  contentPadding: EdgeInsets.zero,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _knowledgeAnswer = value;
-                                    });
-                                  },
+                                const SizedBox(height: 12),
+                                ..._buildRadioListTiles(
+                                    _q4Answer,
+                                    [
+                                      'Sangat Setuju',
+                                      'Setuju',
+                                      'Tidak Setuju',
+                                      'Sangat Tidak Setuju'
+                                    ],
+                                    (value) =>
+                                        setState(() => _q4Answer = value)),
+
+                                // Question 5
+                                const SizedBox(height: 24),
+                                const Text(
+                                  '5. Apakah anda merasa lebih nyaman membuang sampah jika tersedia tempat sampah untuk sampah organik dan anorganik?',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                                RadioListTile<String>(
-                                  title: const Text('Tidak cukup'),
-                                  value: 'Tidak cukup',
-                                  groupValue: _knowledgeAnswer,
-                                  activeColor: const Color(0xFF2cac69),
-                                  contentPadding: EdgeInsets.zero,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _knowledgeAnswer = value;
-                                    });
-                                  },
+                                const SizedBox(height: 12),
+                                ..._buildRadioListTiles(
+                                    _q5Answer,
+                                    [
+                                      'Sangat Setuju',
+                                      'Setuju',
+                                      'Tidak Setuju',
+                                      'Sangat Tidak Setuju'
+                                    ],
+                                    (value) =>
+                                        setState(() => _q5Answer = value)),
+
+                                // Question 6
+                                const SizedBox(height: 24),
+                                const Text(
+                                  '6. Apakah aplikasi membantu pengguna dalam memahami jenis sampah organik dan anorganik?',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                                RadioListTile<String>(
-                                  title: const Text('Tidak perlu'),
-                                  value: 'Tidak perlu',
-                                  groupValue: _knowledgeAnswer,
-                                  activeColor: const Color(0xFF2cac69),
-                                  contentPadding: EdgeInsets.zero,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _knowledgeAnswer = value;
-                                    });
-                                  },
+                                const SizedBox(height: 12),
+                                ..._buildRadioListTiles(
+                                    _q6Answer,
+                                    [
+                                      'Sangat Setuju',
+                                      'Setuju',
+                                      'Tidak Setuju',
+                                      'Sangat Tidak Setuju'
+                                    ],
+                                    (value) =>
+                                        setState(() => _q6Answer = value)),
+
+                                // Question 7
+                                const SizedBox(height: 24),
+                                const Text(
+                                  '7. Apakah anda akan lebih rajin memilah sampah organik dan anorganik jika ada teknologi dan alat yg memudahkan prosesnya?',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
+                                const SizedBox(height: 12),
+                                ..._buildRadioListTiles(
+                                    _q7Answer,
+                                    [
+                                      'Sangat Setuju',
+                                      'Setuju',
+                                      'Tidak Setuju',
+                                      'Sangat Tidak Setuju'
+                                    ],
+                                    (value) =>
+                                        setState(() => _q7Answer = value)),
+
+                                // Question 8
+                                const SizedBox(height: 24),
+                                const Text(
+                                  '8. Apakah insentif (misalnya poin yang dapat ditukar dengan uang) akan meningkatkan motivasi anda dalam membuang sampah dengan benar?',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                ..._buildRadioListTiles(
+                                    _q8Answer,
+                                    [
+                                      'Sangat Setuju',
+                                      'Setuju',
+                                      'Tidak Setuju',
+                                      'Sangat Tidak Setuju'
+                                    ],
+                                    (value) =>
+                                        setState(() => _q8Answer = value)),
+
+                                // Question 9
+                                const SizedBox(height: 24),
+                                const Text(
+                                  '9. Apakah anda akan lebih semangat dalam memilah sampah jika terdapat laporan progress dalam aplikasi?',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                ..._buildRadioListTiles(
+                                    _q9Answer,
+                                    [
+                                      'Sangat Setuju',
+                                      'Setuju',
+                                      'Tidak Setuju',
+                                      'Sangat Tidak Setuju'
+                                    ],
+                                    (value) =>
+                                        setState(() => _q9Answer = value)),
+
+                                // Question 10
+                                const SizedBox(height: 24),
+                                const Text(
+                                  '10. Apakah anda percaya bahwa memilah sampah organik dan anorganik dapat memberikan dampak positif bagi lingkungan?',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                ..._buildRadioListTiles(
+                                    _q10Answer,
+                                    [
+                                      'Sangat Setuju',
+                                      'Setuju',
+                                      'Tidak Setuju',
+                                      'Sangat Tidak Setuju'
+                                    ],
+                                    (value) =>
+                                        setState(() => _q10Answer = value)),
 
                                 const SizedBox(height: 30),
 
@@ -568,9 +620,16 @@ class _SurveyPageState extends State<SurveyPage> {
                                   width: double.infinity,
                                   height: 50,
                                   child: ElevatedButton(
-                                    onPressed: (_motivationAnswer != null &&
-                                            _separationAnswer != null &&
-                                            _knowledgeAnswer != null &&
+                                    onPressed: (_q1Answer != null &&
+                                            _q2Answer != null &&
+                                            _q3Answer != null &&
+                                            _q4Answer != null &&
+                                            _q5Answer != null &&
+                                            _q6Answer != null &&
+                                            _q7Answer != null &&
+                                            _q8Answer != null &&
+                                            _q9Answer != null &&
+                                            _q10Answer != null &&
                                             !_isSubmitting)
                                         ? _submitSurvey
                                         : null,

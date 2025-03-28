@@ -94,17 +94,14 @@ class _ProfilePageState extends State<ProfilePage> {
         setState(() {
           userData = data;
           _nameController.text = data['name'] ?? userName;
-          _emailController.text = data['email'] ??
-              userEmail; // Pastikan email diambil dari API atau SharedPreferences
+          _emailController.text = data['email'] ?? userEmail;
           isLoading = false;
         });
       } else {
-        // Jika API gagal, gunakan data dari SharedPreferences
         setState(() {
           userData = {'name': userName, 'email': userEmail};
           _nameController.text = userName;
-          _emailController.text =
-              userEmail; // Pastikan email diambil dari SharedPreferences
+          _emailController.text = userEmail;
           isLoading = false;
         });
       }
@@ -119,12 +116,15 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _updateProfile() async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final currentName = prefs.getString('userName') ?? '';
+
       final response = await http.put(
         Uri.parse('https://api-wasteapp.vercel.app/api/user/profile'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
-          'email': _emailController.text,
-          'name': _nameController.text,
+          'currentName': currentName,
+          'newName': _nameController.text,
           'newEmail': _newEmailController.text.isNotEmpty
               ? _newEmailController.text
               : null,
@@ -132,18 +132,25 @@ class _ProfilePageState extends State<ProfilePage> {
       );
 
       if (response.statusCode == 200) {
-        if (_newEmailController.text.isNotEmpty) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('userEmail', _newEmailController.text);
-          _emailController.text = _newEmailController.text;
+        final responseData = json.decode(response.body);
+        final updatedUser = responseData['user'];
+        
+        await prefs.setString('userName', updatedUser['name']);
+        if (updatedUser['email'] != null) {
+          await prefs.setString('userEmail', updatedUser['email']);
         }
 
-        _newEmailController.clear();
+        setState(() {
+          userData = updatedUser;
+          _nameController.text = updatedUser['name'];
+          _emailController.text = updatedUser['email'];
+        });
 
+        _newEmailController.clear();
         _showSuccessDialog(message: 'Profile updated successfully');
-        await _getUserData();
       } else {
-        _showErrorDialog('Failed to update profile');
+        final errorData = json.decode(response.body);
+        _showErrorDialog(errorData['error'] ?? 'Failed to update profile');
       }
     } catch (e) {
       _showErrorDialog('Error: $e');
@@ -239,9 +246,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   'Success',
                   style: TextStyle(
                     fontSize: 20,
-                    color: Colors.black,
                     fontWeight: FontWeight.w700,
-                    fontFamily: 'Poppins',
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -249,8 +254,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   message,
                   style: const TextStyle(
                     fontSize: 16,
-                    color: Colors.black,
-                    fontFamily: 'Poppins',
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -264,7 +267,6 @@ class _ProfilePageState extends State<ProfilePage> {
                       fontSize: 15,
                       color: Color(0xFF2cac69),
                       fontWeight: FontWeight.w700,
-                      fontFamily: 'Poppins',
                     ),
                   ),
                 ),
@@ -300,9 +302,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   'Terjadi Kesalahan',
                   style: TextStyle(
                     fontSize: 20,
-                    color: Colors.black,
                     fontWeight: FontWeight.w700,
-                    fontFamily: 'Poppins',
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -310,8 +310,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   message,
                   style: const TextStyle(
                     fontSize: 16,
-                    color: Colors.black,
-                    fontFamily: 'Poppins',
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -325,7 +323,6 @@ class _ProfilePageState extends State<ProfilePage> {
                       fontSize: 15,
                       color: Color(0xFF2cac69),
                       fontWeight: FontWeight.w700,
-                      fontFamily: 'Poppins',
                     ),
                   ),
                 ),
@@ -455,18 +452,51 @@ class _ProfilePageState extends State<ProfilePage> {
         );
         break;
       case 2:
-        // Tambahkan navigasi untuk halaman Scan
+        // Add navigation for Scan page
         break;
       case 3:
-        // Tambahkan navigasi untuk halaman Statistics
+        // Add navigation for Leaderboard page
         break;
       case 4:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const ProfilePage()),
-        );
+        // Already on Profile page
         break;
     }
+  }
+
+  void _showImagePopup() {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircleAvatar(
+                radius: 100,
+                backgroundImage: _image != null
+                    ? FileImage(_image!)
+                    : const AssetImage('assets/images/TU-logogram.webp')
+                        as ImageProvider,
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                },
+                child: const Text(
+                  'Close',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Color(0xFF2cac69),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -501,46 +531,48 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                         const SizedBox(height: 20),
 
+                        // Profile Picture and Name
                         Center(
                           child: Column(
                             children: [
-                              Stack(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 50,
-                                    backgroundColor: Colors.grey[200],
-                                    backgroundImage: _image != null
-                                        ? FileImage(_image!)
-                                        : const AssetImage(
-                                                'assets/images/TU-logogram.webp')
-                                            as ImageProvider,
-                                  ),
-                                  Positioned(
-                                    bottom: 0,
-                                    right: 0,
-                                    child: GestureDetector(
-                                      onTap: _pickImage,
-                                      child: Container(
-                                        height: 30,
-                                        width: 30,
-                                        decoration: const BoxDecoration(
-                                          color: Color(0xFF2cac69),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Icon(
-                                          Icons.camera_alt,
-                                          color: Colors.white,
-                                          size: 18,
+                              GestureDetector(
+                                onTap: _showImagePopup,
+                                child: Stack(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 50,
+                                      backgroundImage: _image != null
+                                          ? FileImage(_image!)
+                                          : const AssetImage(
+                                                  'assets/images/TU-logogram.webp')
+                                              as ImageProvider,
+                                    ),
+                                    Positioned(
+                                      bottom: 0,
+                                      right: 0,
+                                      child: GestureDetector(
+                                        onTap: _pickImage,
+                                        child: Container(
+                                          height: 30,
+                                          width: 30,
+                                          decoration: const BoxDecoration(
+                                            color: Color(0xFF2cac69),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.camera_alt,
+                                            color: Colors.white,
+                                            size: 18,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                userData['name'] ??
-                                    'User Name', // Tampilkan nama dari userData
+                                userData['name'] ?? 'User Name',
                                 style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -597,7 +629,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              // Personal Data
                               ListTile(
                                 leading: const Icon(Icons.person,
                                     color: Color(0xFF2cac69)),
@@ -607,7 +638,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                 onTap: _showEditProfileDialog,
                               ),
                               const Divider(),
-                              // Update Password
                               ListTile(
                                 leading: const Icon(Icons.lock,
                                     color: Color(0xFF2cac69)),
@@ -648,7 +678,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              // Support
                               ListTile(
                                 leading: const Icon(Icons.info,
                                     color: Color(0xFF2cac69)),
@@ -708,212 +737,115 @@ class _ProfilePageState extends State<ProfilePage> {
             bottom: 0,
             left: 0,
             right: 0,
-            child: Stack(
-              alignment: Alignment.center,
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  height: 70,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(30),
-                      topRight: Radius.circular(30),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 10,
-                        offset: Offset(0, -2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      // Home button
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => _onItemTapped(0, context),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.home_outlined,
-                                color: _selectedIndex == 0
-                                    ? const Color(0xFF2cac69)
-                                    : Colors.grey,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Home',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: _selectedIndex == 0
-                                      ? const Color(0xFF2cac69)
-                                      : Colors.grey,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Container(
-                                height: 4,
-                                width: 4,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: _selectedIndex == 0
-                                      ? const Color(0xFF2cac69)
-                                      : Colors.transparent,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => _onItemTapped(1, context),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.article_outlined,
-                                color: _selectedIndex == 1
-                                    ? const Color(0xFF2cac69)
-                                    : Colors.grey,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'News',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: _selectedIndex == 1
-                                      ? const Color(0xFF2cac69)
-                                      : Colors.grey,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Container(
-                                height: 4,
-                                width: 4,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: _selectedIndex == 1
-                                      ? const Color(0xFF2cac69)
-                                      : Colors.transparent,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Expanded(child: Container()),
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => _onItemTapped(3, context),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.bar_chart_outlined,
-                                color: _selectedIndex == 3
-                                    ? const Color(0xFF2cac69)
-                                    : Colors.grey,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Leaderboard',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: _selectedIndex == 3
-                                      ? const Color(0xFF2cac69)
-                                      : Colors.grey,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Container(
-                                height: 4,
-                                width: 4,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: _selectedIndex == 3
-                                      ? const Color(0xFF2cac69)
-                                      : Colors.transparent,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => _onItemTapped(4, context),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.person_outline,
-                                color: _selectedIndex == 4
-                                    ? const Color(0xFF2cac69)
-                                    : Colors.grey,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Profile',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: _selectedIndex == 4
-                                      ? const Color(0xFF2cac69)
-                                      : Colors.grey,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Container(
-                                height: 4,
-                                width: 4,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: _selectedIndex == 4
-                                      ? const Color(0xFF2cac69)
-                                      : Colors.transparent,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Positioned(
-                  top: -25,
-                  child: GestureDetector(
-                    onTap: () => _onItemTapped(2, context),
-                    child: Container(
-                      height: 65,
-                      width: 65,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF2cac69),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 8,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.qr_code_scanner_outlined,
-                        color: Colors.white,
-                        size: 30,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            child: _buildBottomNavigationBar(),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBottomNavigationBar() {
+    return Stack(
+      alignment: Alignment.center,
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          height: 70,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(30),
+              topRight: Radius.circular(30),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 15,
+                offset: const Offset(0, -5),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(Icons.home_outlined, 'Home', 0),
+              _buildNavItem(Icons.article_outlined, 'News', 1),
+              const SizedBox(width: 48), // Space for center button
+              _buildNavItem(Icons.bar_chart_outlined, 'Leaderboard', 3),
+              _buildNavItem(Icons.person_outlined, 'Profile', 4),
+            ],
+          ),
+        ),
+        Positioned(
+          top: -25,
+          child: GestureDetector(
+            onTap: () => _onItemTapped(2, context),
+            child: Container(
+              height: 65,
+              width: 65,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF2cac69), Color(0xFF4CAF50)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF2cac69).withOpacity(0.5),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.qr_code_scanner_outlined,
+                color: Colors.white,
+                size: 30,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, String label, int index) {
+    return Expanded(
+      child: InkWell(
+        onTap: () => _onItemTapped(index, context),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: _selectedIndex == index
+                  ? const Color(0xFF2cac69)
+                  : Colors.grey,
+              size: 24,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: _selectedIndex == index
+                    ? const Color(0xFF2cac69)
+                    : Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 2),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              height: 4,
+              width: _selectedIndex == index ? 20 : 0,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2cac69),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
