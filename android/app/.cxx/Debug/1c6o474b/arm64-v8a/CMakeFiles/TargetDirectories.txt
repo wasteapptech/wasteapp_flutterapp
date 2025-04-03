@@ -1,0 +1,2 @@
+E:/Kuliah/skrispsi/new/wasteapp_flutterapp/android/app/.cxx/Debug/1c6o474b/arm64-v8a/CMakeFiles/edit_cache.dir
+E:/Kuliah/skrispsi/new/wasteapp_flutterapp/android/app/.cxx/Debug/1c6o474b/arm64-v8a/CMakeFiles/rebuild_cache.dir

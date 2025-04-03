@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "575073159811",
+    "firebase_url": "https://wasteappcore-default-rtdb.firebaseio.com",
+    "project_id": "wasteappcore",
+    "storage_bucket": "wasteappcore.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:575073159811:android:cd3a0068157a73586be9b6",
+        "android_client_info": {
+          "package_name": "com.example.wasteapptest"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBaycvWSId9QN6yQE1PbaJL8qR9wEvZuFc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

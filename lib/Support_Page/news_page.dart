@@ -29,67 +29,64 @@ class _NewsPageState extends State<NewsPage> {
     fetchKegiatan();
   }
 
-  Future<void> fetchNews() async {
-    const apiKey = '4976a49c841d4519b5a32851ccc51f54';
-    const url = 'https://newsapi.org/v2/everything?'
-        'q=sampah+OR+waste+management+OR+recycling&'
-        'language=id&'
-        'sortBy=publishedAt&'
-        'apiKey=$apiKey';
+ Future<void> fetchNews() async {
+  const newsapiurl = 'https://api-wasteapp.vercel.app/api/news';
+  
+  try {
+    final response = await http.get(Uri.parse(newsapiurl));
 
-    try {
-      final response = await http.get(Uri.parse(url));
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (mounted) {
-          setState(() {
-            newsItems = List<Map<String, dynamic>>.from(data['articles'])
-                .take(5)
-                .toList();
-            isLoadingNews = false;
-          });
-        }
-      } else {
-        throw Exception('Gagal memuat berita');
-      }
-    } catch (e) {
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
       if (mounted) {
         setState(() {
+          newsItems = List<Map<String, dynamic>>.from(data)
+              .take(5) // Take only 5 latest news
+              .toList();
           isLoadingNews = false;
         });
-        _showErrorDialog('Gagal memuat berita. Silakan coba lagi nanti.');
       }
+    } else {
+      throw Exception('Gagal memuat berita dari server lokal');
     }
+  } catch (e) {
+    if (mounted) {
+      setState(() {
+        isLoadingNews = false;
+      });
+      _showErrorDialog('Gagal memuat berita. Silakan coba lagi nanti.');
+    }
+    debugPrint('Error fetching news: $e');
   }
+}
 
   Future<void> fetchKegiatan() async {
-    const url = 'https://api-wasteapp.vercel.app/api/kegiatan';
+  const url = 'https://api-wasteapp.vercel.app/api/kegiatan';
 
-    try {
-      final response = await http.get(Uri.parse(url));
+  try {
+    final response = await http.get(Uri.parse(url));
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (mounted) {
-          setState(() {
-            kegiatanItems =
-                List<Map<String, dynamic>>.from(data).take(3).toList();
-            isLoadingKegiatan = false;
-          });
-        }
-      } else {
-        throw Exception('Gagal memuat kegiatan');
-      }
-    } catch (e) {
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
       if (mounted) {
         setState(() {
+          kegiatanItems = List<Map<String, dynamic>>.from(data)
+              .take(3)
+              .toList();
           isLoadingKegiatan = false;
         });
-        _showErrorDialog('Gagal memuat kegiatan. Silakan coba lagi nanti.');
       }
+    } else {
+      throw Exception('Gagal memuat kegiatan');
+    }
+  } catch (e) {
+    if (mounted) {
+      setState(() {
+        isLoadingKegiatan = false;
+      });
+      _showErrorDialog('Gagal memuat kegiatan. Silakan coba lagi nanti.');
     }
   }
+}
 
   Future<void> _launchURL(String? url) async {
     if (url == null || url.isEmpty) {
@@ -242,6 +239,7 @@ class _NewsPageState extends State<NewsPage> {
             fontWeight: FontWeight.w600,
           ),
         ),
+        centerTitle: true,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
             bottom: Radius.circular(20),
@@ -335,56 +333,128 @@ class _NewsPageState extends State<NewsPage> {
     );
   }
 
-  Widget _buildNewsCard(Map<String, dynamic> article) {
-    final DateTime publishedAt = DateTime.parse(article['publishedAt']);
-    final String formattedDate = DateFormat('dd MMM yyyy').format(publishedAt);
 
-    return Material(
-      borderRadius: BorderRadius.circular(12),
-      elevation: 2,
+// ... (keep all imports and other code above the same)
+
+Widget _buildNewsCard(Map<String, dynamic> article) {
+  return Container(
+    margin: const EdgeInsets.only(bottom: 16),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Material(
+      borderRadius: BorderRadius.circular(16),
+      color: Colors.white,
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         onTap: () => _launchURL(article['url']),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (article['urlToImage'] != null)
-              ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(12)),
-                child: Image.network(
-                  article['urlToImage'],
+            // Image with gradient overlay
+            Stack(
+              children: [
+                if (article['image'] != null)
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(16)),
+                    child: Image.network(
+                      article['image'],
+                      height: 180,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return SizedBox(
+                          height: 180,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                  : null,
+                              color: const Color(0xFF2cac69),
+                            ),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          height: 180,
+                          color: Colors.grey[100],
+                          child: const Center(
+                            child: Icon(
+                              Icons.image_not_supported,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  )
+                else
+                  Container(
+                    height: 180,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(16)),
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.article_outlined,
+                        color: Colors.grey,
+                        size: 40,
+                      ),
+                    ),
+                  ),
+                // Gradient overlay
+                Container(
                   height: 180,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return SizedBox(
-                      height: 180,
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded /
-                                  loadingProgress.expectedTotalBytes!
-                              : null,
-                        ),
-                      ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 180,
-                      color: Colors.grey[200],
-                      child: const Center(
-                        child: Icon(
-                          Icons.image_not_supported,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    );
-                  },
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(16)),
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [
+                        Colors.black.withOpacity(0.5),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+                // Category badge
+                Positioned(
+                  top: 16,
+                  left: 16,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2cac69),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      article['category'] ?? 'Berita',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            // Content
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -412,22 +482,34 @@ class _NewsPageState extends State<NewsPage> {
                   ),
                   const SizedBox(height: 12),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        article['source']['name'] ?? 'Sumber tidak diketahui',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.green[700],
-                          fontWeight: FontWeight.w500,
-                        ),
+                      const Icon(
+                        Icons.access_time,
+                        size: 16,
+                        color: Colors.grey,
                       ),
+                      const SizedBox(width: 4),
                       Text(
-                        formattedDate,
+                        'Baru saja',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600],
                         ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        'Baca selengkapnya',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.green[700],
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.arrow_forward,
+                        size: 16,
+                        color: Colors.green[700],
                       ),
                     ],
                   ),
@@ -437,20 +519,45 @@ class _NewsPageState extends State<NewsPage> {
           ],
         ),
       ),
-    );
+    ),
+  );
+}
+
+Widget _buildKegiatanCard(Map<String, dynamic> kegiatan) {
+  final String? tanggalStr = kegiatan['tanggal'];
+  String formattedDate = 'Tanggal tidak tersedia';
+
+  if (tanggalStr != null && tanggalStr.isNotEmpty) {
+    DateTime? tanggal;
+    final parts1 = tanggalStr.split('-');
+    if (parts1.length == 3 && parts1[0].length == 2) {
+      tanggal = DateTime.tryParse('${parts1[2]}-${parts1[1]}-${parts1[0]}');
+    }
+    if (tanggal == null) {
+      tanggal = DateTime.tryParse(tanggalStr);
+    }
+    if (tanggal != null) {
+      formattedDate = DateFormat('dd MMM yyyy').format(tanggal);
+    }
   }
 
-  Widget _buildKegiatanCard(Map<String, dynamic> kegiatan) {
-    final DateTime? tanggal = DateTime.tryParse(kegiatan['tanggal'] ?? '');
-    final String formattedDate = tanggal != null
-        ? DateFormat('dd MMM yyyy').format(tanggal)
-        : 'Tanggal tidak tersedia';
-
-    return Material(
-      borderRadius: BorderRadius.circular(12),
-      elevation: 2,
+  return Container(
+    margin: const EdgeInsets.only(bottom: 16),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Material(
+      borderRadius: BorderRadius.circular(16),
+      color: Colors.white,
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         onTap: () {
           // Add navigation to kegiatan detail if needed
         },
@@ -462,15 +569,20 @@ class _NewsPageState extends State<NewsPage> {
               Row(
                 children: [
                   Container(
-                    width: 50,
-                    height: 50,
+                    width: 60,
+                    height: 60,
                     decoration: BoxDecoration(
-                      color: Colors.green[50],
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF2cac69), Color(0xFF30CF7A)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.event,
-                      color: Colors.green[700],
+                      color: Colors.white,
+                      size: 30,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -479,7 +591,7 @@ class _NewsPageState extends State<NewsPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          kegiatan['nama'] ?? 'Kegiatan tanpa nama',
+                          kegiatan['judul'] ?? 'Kegiatan tanpa judul',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -487,12 +599,22 @@ class _NewsPageState extends State<NewsPage> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          formattedDate,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.calendar_today,
+                              size: 14,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              formattedDate,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -507,12 +629,26 @@ class _NewsPageState extends State<NewsPage> {
                   color: Colors.grey[800],
                 ),
               ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(
+                      color: Colors.grey[200]!,
+                      width: 1,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   Widget _buildEmptyState({required String title}) {
     return Center(

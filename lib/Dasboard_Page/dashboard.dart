@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:wasteapptest/Profile_Page/profile.dart';
+import 'package:wasteapptest/Services/waste_chat_page.dart';
 import 'package:wasteapptest/Support_Page/news_page.dart';
 import 'package:wasteapptest/Dasboard_Page/survey.dart';
-import 'package:wasteapptest/Dasboard_Page/admin.dart'; // Make sure to create this page
+import 'package:wasteapptest/Dasboard_Page/admin.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -13,6 +15,20 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
+  String userName = 'Pengguna'; // Default value
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userName = prefs.getString('userName') ?? 'Pengguna';
+    });
+  }
 
   void _onItemTapped(int index, BuildContext context) {
     setState(() {
@@ -47,6 +63,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  void _openTawkChat(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const TawkChatPage()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,129 +81,76 @@ class _DashboardScreenState extends State<DashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Header Section with Balance Card
-                Container(
-                  height: 250,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        const Color(0xFF2cac69),
-                        const Color(0xFF2cac69).withOpacity(0.8),
-                      ],
-                    ),
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(30),
-                      bottomRight: Radius.circular(30),
-                    ),
-                  ),
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        right: 0,
-                        top: 60,
-                        child: Opacity(
-                          opacity: 0.7,
-                          child: Image.asset(
-                            'assets/images/people_recycling.png',
-                            height: 150,
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 40),
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
-                                    blurRadius: 15,
-                                    offset: const Offset(0, 10),
-                                  ),
-                                ],
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Saldo kamu yang tersedia',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.black87,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Rp. 50.000,00',
-                                    style: TextStyle(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.bold,
-                                      color: const Color(0xFF2cac69),
-                                      shadows: [
-                                        Shadow(
-                                          blurRadius: 10.0,
-                                          color: Colors.black12,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                _buildHeaderSection(),
 
                 // Quick Access Menu Grid
                 Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 20.0, vertical: 24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildMenuCard(
-                        'Tempat Sampah Terdekat',
-                        Icons.location_on_outlined,
-                        Colors.blue, 
+                      const Text(
+                        'Akses Cepat',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF333333),
+                        ),
                       ),
-                      _buildMenuCard(
-                        'Hasil Transaksi Sampah',
-                        Icons.receipt_long_outlined,
-                        Colors.orange,
-                      ),
-                      _buildMenuCard(
-                        'Layanan Pelanggan',
-                        Icons.headset_mic_outlined,
-                        Colors.purple,
-                      ),
-                      _buildMenuCard(
-                        'Dompet',
-                        Icons.account_balance_wallet_outlined,
-                        Colors.teal,
+                      const SizedBox(height: 16),
+                      GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 1.3,
+                        children: [
+                          _buildMenuCard(
+                            'Tempat Sampah Terdekat',
+                            Icons.location_on_outlined,
+                            const Color(0xFF4C89F8),
+                            onTap: () {},
+                          ),
+                          _buildMenuCard(
+                            'Transaksi Sampah',
+                            Icons.receipt_long_outlined,
+                            const Color(0xFFFF9533),
+                            onTap: () {},
+                          ),
+                          _buildMenuCard(
+                            'Layanan Pelanggan',
+                            Icons.headset_mic_outlined,
+                            const Color(0xFF9C5EF2),
+                            onTap: () => _openTawkChat(context),
+                          ),
+                          _buildMenuCard(
+                            'Dompet',
+                            Icons.account_balance_wallet_outlined,
+                            const Color(0xFF00B5A5),
+                            onTap: () {},
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
 
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const Text(
+                        'Informasi & Layanan',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF333333),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
                       _buildSurveyCard(context),
                       const SizedBox(height: 16),
                       _buildAdminCard(context),
@@ -204,21 +174,159 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildMenuCard(String title, IconData icon, Color color) {
+  Widget _buildHeaderSection() {
+    return Container(
+      height: 260,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF2cac69),
+            const Color(0xFF30CF7A),
+          ],
+        ),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(35),
+          bottomRight: Radius.circular(35),
+        ),
+      ),
+      child: SingleChildScrollView(
+        child: Stack(
+          children: [
+            Positioned(
+              right: -50,
+              top: 20,
+              child: Container(
+                height: 100,
+                width: 100,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+            Positioned(
+              left: -30,
+              bottom: 50,
+              child: Container(
+                height: 80,
+                width: 80,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 40),
+                  const Text(
+                    '👋 Selamat datang kembali,',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    userName, // Use the userName from state
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 18),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.06),
+                          blurRadius: 15,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE8F7EF),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.account_balance_wallet,
+                                color: Color(0xFF2cac69),
+                                size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            const Text(
+                              'Saldo Tersedia',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF757575),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Rp 50.000,00',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF2cac69),
+                            height: 1,
+                            shadows: [
+                              Shadow(
+                                blurRadius: 10.0,
+                                color: Colors.black.withOpacity(0.05),
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuCard(String title, IconData icon, Color color,
+      {required VoidCallback onTap}) {
     return Material(
-      borderRadius: BorderRadius.circular(20),
-      elevation: 5,
-      shadowColor: Colors.black.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(24),
+      elevation: 2,
+      shadowColor: Colors.black.withOpacity(0.05),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
         ),
         child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () {
-            // Add functionality for each menu item
-          },
+          borderRadius: BorderRadius.circular(24),
+          onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -228,11 +336,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: color.withOpacity(0.1),
-                    shape: BoxShape.circle,
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Icon(
                     icon,
-                    size: 30,
+                    size: 28,
                     color: color,
                   ),
                 ),
@@ -241,9 +349,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   title,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                    color: Color(0xFF333333),
                   ),
                 ),
               ],
@@ -256,11 +364,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildSurveyCard(BuildContext context) {
     return Material(
-      borderRadius: BorderRadius.circular(20),
-      elevation: 5,
-      shadowColor: Colors.black.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(24),
+      elevation: 2,
+      shadowColor: Colors.black.withOpacity(0.05),
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         onTap: () {
           Navigator.of(context).push(
             PageRouteBuilder(
@@ -274,72 +382,81 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 var tween = Tween(begin: begin, end: end)
                     .chain(CurveTween(curve: curve));
                 var offsetAnimation = animation.drive(tween);
-                return SlideTransition(
-                    position: offsetAnimation, child: child);
+                return SlideTransition(position: offsetAnimation, child: child);
               },
               transitionDuration: const Duration(milliseconds: 300),
             ),
           );
         },
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
           ),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE3F2FD),
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(
                   Icons.poll_outlined,
                   color: Colors.blue,
-                  size: 30,
+                  size: 26,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 18),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Survei',
+                      'Survei Pengguna',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: Color(0xFF333333),
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Mohon isi survei berikut untuk membantu kami mengembangkan aplikasi ini',
+                      'Mohon isi survei berikut untuk membantu pengembangan aplikasi',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 13,
                         color: Colors.grey[600],
+                        height: 1.4,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Text(
-                          'Isi Survei',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.blue[600],
-                            fontWeight: FontWeight.w500,
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Isi Survei',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.blue[700],
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 4),
-                        Icon(
-                          Icons.arrow_forward_ios,
-                          size: 14,
-                          color: Colors.blue[600],
-                        ),
-                      ],
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 16,
+                            color: Colors.blue[700],
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -353,16 +470,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildAdminCard(BuildContext context) {
     return Material(
-      borderRadius: BorderRadius.circular(20),
-      elevation: 5,
-      shadowColor: Colors.black.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(24),
+      elevation: 2,
+      shadowColor: Colors.black.withOpacity(0.05),
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         onTap: () {
           Navigator.of(context).push(
             PageRouteBuilder(
               pageBuilder: (context, animation, secondaryAnimation) =>
-                  const AdminPage(), // Make sure to create this page
+                  const AdminPage(),
               transitionsBuilder:
                   (context, animation, secondaryAnimation, child) {
                 const begin = Offset(1.0, 0.0);
@@ -371,72 +488,81 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 var tween = Tween(begin: begin, end: end)
                     .chain(CurveTween(curve: curve));
                 var offsetAnimation = animation.drive(tween);
-                return SlideTransition(
-                    position: offsetAnimation, child: child);
+                return SlideTransition(position: offsetAnimation, child: child);
               },
               transitionDuration: const Duration(milliseconds: 300),
             ),
           );
         },
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
           ),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE8F5E9),
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(
                   Icons.admin_panel_settings_outlined,
                   color: Colors.green,
-                  size: 30,
+                  size: 26,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 18),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Admin',
+                      'Admin Panel',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: Color(0xFF333333),
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Hanya admin yang bisa mengakses fitur ini',
+                      'Area khusus untuk admin aplikasi',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 13,
                         color: Colors.grey[600],
+                        height: 1.4,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Text(
-                          'Masuk Admin',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.green[600],
-                            fontWeight: FontWeight.w500,
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Masuk Admin',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.green[700],
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 4),
-                        Icon(
-                          Icons.arrow_forward_ios,
-                          size: 14,
-                          color: Colors.green[600],
-                        ),
-                      ],
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 16,
+                            color: Colors.green[700],
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -455,9 +581,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       children: [
         Container(
           height: 70,
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: Colors.white,
-            borderRadius: const BorderRadius.only(
+            borderRadius: BorderRadius.only(
               topLeft: Radius.circular(30),
               topRight: Radius.circular(30),
             ),

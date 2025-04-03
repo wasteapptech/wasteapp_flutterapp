@@ -1,12 +1,20 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:wasteapptest/Dasboard_Page/dashboard.dart'; 
+import 'package:wasteapptest/Dasboard_Page/dashboard.dart';
+import 'package:wasteapptest/Services/notification_service.dart'; 
 import 'package:wasteapptest/Splash_screen/splash_screen.dart';
 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final bool isLoggedIn = await getLoginStatus();
+
+  await Firebase.initializeApp();
+  
+  final notificationService = NotificationService();
+  await notificationService.initialize();
+  
   runApp(MyApp(isLoggedIn: isLoggedIn));
 }
 

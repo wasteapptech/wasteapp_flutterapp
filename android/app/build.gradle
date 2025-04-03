@@ -2,6 +2,7 @@ plugins {
     id "com.android.application"
     id "kotlin-android"
     id "dev.flutter.flutter-gradle-plugin"
+    id "com.google.gms.google-services"  
 }
 
 def keystoreProperties = new Properties()
@@ -11,43 +12,58 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.example.wasteapptest"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8
-    }
-
-    defaultConfig {
-        applicationId = "com.example.wasteapptest"
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = 1 // Ganti dengan versi code yang sesuai
-        versionName = "1.0.0" // Ganti dengan version name yang sesuai
-    }
-
-    signingConfigs {
-        release {
-            keyAlias = keystoreProperties['keyAlias']
-            keyPassword = keystoreProperties['keyPassword']
-            storeFile = file(keystoreProperties['storeFile'])
-            storePassword = keystoreProperties['storePassword']
-        }
-    }
-
-    buildTypes {
-        release {
-            signingConfig signingConfigs.release
-        }
-    }
+    namespace "com.example.wasteapptest" 
+    compileSdkVersion flutter.compileSdkVersion 
+    ndkVersion flutter.ndkVersion 
+ 
+    compileOptions { 
+        sourceCompatibility JavaVersion.VERSION_1_8 
+        targetCompatibility JavaVersion.VERSION_1_8 
+    } 
+ 
+    kotlinOptions { 
+        jvmTarget = '1.8' 
+    } 
+ 
+    defaultConfig { 
+        applicationId "com.example.wasteapptest" 
+        minSdkVersion flutter.minSdkVersion
+        targetSdkVersion flutter.targetSdkVersion 
+        versionCode 1 
+        versionName "1.0.0" 
+    } 
+ 
+    signingConfigs { 
+        release { 
+            keyAlias = keystoreProperties['keyAlias'] 
+            keyPassword = keystoreProperties['keyPassword'] 
+            storeFile = file(keystoreProperties['storeFile']) 
+            storePassword = keystoreProperties['storePassword'] 
+        } 
+    } 
+    buildTypes { 
+        release { 
+            signingConfig signingConfigs.release 
+            // Enable code shrinking and obfuscation 
+            minifyEnabled true 
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro' 
+        } 
+        debug { 
+            // Disable minification for debug builds 
+            minifyEnabled false 
+        } 
+    } 
 }
 
-flutter {
-    source = "../.."
+flutter { 
+    source = "../.." 
+} 
+dependencies { 
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"   
+    // Firebase and WorkManager dependencies 
+    implementation platform('com.google.firebase:firebase-bom:32.7.0') // Firebase BoM 
+    implementation 'com.google.firebase:firebase-messaging-ktx' // FCM with Kotlin support 
+    implementation 'com.google.firebase:firebase-messaging:23.4.0' 
+    implementation 'androidx.work:work-runtime:2.8.1' 
+    implementation 'androidx.multidex:multidex:2.0.1' // Multidex support   
 }

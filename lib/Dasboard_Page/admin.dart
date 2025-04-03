@@ -21,7 +21,7 @@ class _AdminPageState extends State<AdminPage> {
   // Controllers
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _namaController = TextEditingController();
+  final TextEditingController _judulController = TextEditingController();
   final TextEditingController _deskripsiController = TextEditingController();
   final TextEditingController _tanggalController = TextEditingController();
   DateTime? _selectedDate;
@@ -40,7 +40,7 @@ class _AdminPageState extends State<AdminPage> {
   void dispose() {
     _usernameController.dispose();
     _passwordController.dispose();
-    _namaController.dispose();
+    _judulController.dispose();
     _deskripsiController.dispose();
     _tanggalController.dispose();
     super.dispose();
@@ -88,7 +88,12 @@ class _AdminPageState extends State<AdminPage> {
       );
 
       if (response.statusCode == 200) {
-        await _showSuccessDialog();
+        json.decode(response.body);
+        await _showSuccessDialog(
+          title: 'Login Berhasil',
+          message: 'Kamu berhasil login ke admin panel',
+          buttonText: 'Lanjutkan',
+        );
         setState(() {
           _isLoggedIn = true;
           _isLoading = false;
@@ -108,6 +113,7 @@ class _AdminPageState extends State<AdminPage> {
     }
   }
 
+  // Update the fetch kegiatan function
   Future<void> _fetchKegiatan() async {
     setState(() {
       _isLoading = true;
@@ -137,9 +143,10 @@ class _AdminPageState extends State<AdminPage> {
     }
   }
 
+// Update the tambah/update kegiatan function
   Future<void> _tambahKegiatan() async {
-    if (_namaController.text.isEmpty || _deskripsiController.text.isEmpty) {
-      _showErrorDialog('Nama dan deskripsi harus diisi');
+    if (_judulController.text.isEmpty || _deskripsiController.text.isEmpty) {
+      _showErrorDialog('Judul dan deskripsi harus diisi');
       return;
     }
 
@@ -155,7 +162,7 @@ class _AdminPageState extends State<AdminPage> {
               'https://api-wasteapp.vercel.app/api/kegiatan/$_currentKegiatanId'),
           headers: {'Content-Type': 'application/json'},
           body: json.encode({
-            'nama': _namaController.text,
+            'judul': _judulController.text,
             'tanggal': _tanggalController.text,
             'deskripsi': _deskripsiController.text,
           }),
@@ -165,7 +172,7 @@ class _AdminPageState extends State<AdminPage> {
           Uri.parse('https://api-wasteapp.vercel.app/api/kegiatan'),
           headers: {'Content-Type': 'application/json'},
           body: json.encode({
-            'nama': _namaController.text,
+            'judul': _judulController.text,
             'tanggal': _tanggalController.text,
             'deskripsi': _deskripsiController.text,
           }),
@@ -173,7 +180,7 @@ class _AdminPageState extends State<AdminPage> {
       }
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        _namaController.clear();
+        _judulController.clear();
         _deskripsiController.clear();
         setState(() {
           _showKegiatanForm = false;
@@ -201,33 +208,23 @@ class _AdminPageState extends State<AdminPage> {
     }
   }
 
+// Update the delete function
   Future<void> _hapusKegiatan(String id) async {
-    setState(() {
-      _isLoading = true;
-    });
-
     try {
-      final response = await http.delete(
-        Uri.parse('https://api-wasteapp.vercel.app/api/kegiatan/$id'),
-      );
+      final url = 'https://api-wasteapp.vercel.app/api/kegiatan/$id';
+      final response = await http.delete(Uri.parse(url));
 
       if (response.statusCode == 200) {
-        setState(() {
-          _isLoading = false;
-        });
+        // Refresh the kegiatan list after successful deletion
         _fetchKegiatan();
-        _showSuccessDialog(message: 'Kegiatan berhasil dihapus');
+        await _showSuccessDialog(message: 'Kegiatan berhasil dihapus');
       } else {
-        setState(() {
-          _isLoading = false;
-        });
-        _showErrorDialog('Gagal menghapus kegiatan');
+        final errorData = json.decode(response.body);
+        final errorMessage = errorData['error'] ?? 'Gagal menghapus kegiatan';
+        _showErrorDialog(errorMessage);
       }
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      _showErrorDialog('Terjadi kesalahan. Coba lagi nanti.');
+      _showErrorDialog('Terjadi kesalahan: ${e.toString()}');
     }
   }
 
@@ -293,54 +290,66 @@ class _AdminPageState extends State<AdminPage> {
     );
   }
 
-  Future<void> _showSuccessDialog(
-      {String message = 'Kamu berhasil login ke admin panel'}) async {
-    return showDialog(
+  Future<void> _showSuccessDialog({
+    String title = 'Berhasil',
+    String message = 'Operasi berhasil',
+    String buttonText = 'Lanjutkan',
+    VoidCallback? onPressed,
+  }) async {
+    await showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        backgroundColor: Colors.white,
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SvgPicture.asset(
-              'assets/svg/success-svgrepo-com.svg',
-              width: 50,
-              height: 50,
-            ),
-            const SizedBox(height: 20),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.black87,
-                fontFamily: 'Poppins',
-              ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green[700],
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+      builder: (ctx) => Center(
+        child: Card(
+          elevation: 10,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SvgPicture.asset(
+                  'assets/svg/success-svgrepo-com.svg',
+                  width: 50,
+                  height: 50,
                 ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
-              child: const Text(
-                'Lanjutkan',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
+                const SizedBox(height: 20),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    color: Colors.black,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Poppins',
+                  ),
                 ),
-              ),
+                const SizedBox(height: 10),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.black,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+                const SizedBox(height: 20),
+                TextButton(
+                  onPressed: onPressed ?? () => Navigator.of(ctx).pop(),
+                  child: Text(
+                    buttonText,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.green[700],
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -370,7 +379,12 @@ class _AdminPageState extends State<AdminPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red[700],
                 ),
-                child: const Text('Hapus'),
+                child: const Text(
+                  'Hapus',
+                  style: TextStyle(
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ],
           ),
@@ -727,7 +741,7 @@ class _AdminPageState extends State<AdminPage> {
                   setState(() {
                     _showKegiatanForm = true;
                     _currentKegiatanId = null;
-                    _namaController.clear();
+                    _judulController.clear();
                     _deskripsiController.clear();
                   });
                 },
@@ -884,7 +898,7 @@ class _AdminPageState extends State<AdminPage> {
                   setState(() {
                     _showKegiatanForm = false;
                     _currentKegiatanId = null;
-                    _namaController.clear();
+                    _judulController.clear();
                     _deskripsiController.clear();
                   });
                 },
@@ -893,9 +907,9 @@ class _AdminPageState extends State<AdminPage> {
           ),
           const SizedBox(height: 16),
           TextField(
-            controller: _namaController,
+            controller: _judulController,
             decoration: InputDecoration(
-              labelText: 'Nama Kegiatan',
+              labelText: 'judul Kegiatan',
               labelStyle: TextStyle(color: Colors.grey[600]),
               prefixIcon: Icon(Icons.event, color: Colors.green[700]),
               border: OutlineInputBorder(
@@ -960,7 +974,7 @@ class _AdminPageState extends State<AdminPage> {
                     setState(() {
                       _showKegiatanForm = false;
                       _currentKegiatanId = null;
-                      _namaController.clear();
+                      _judulController.clear();
                       _deskripsiController.clear();
                     });
                   },
@@ -1068,7 +1082,7 @@ class _AdminPageState extends State<AdminPage> {
               ),
             ),
             title: Text(
-              kegiatan['nama'] ?? 'No Name',
+              kegiatan['judul'] ?? 'No Title',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: Colors.green[700],
@@ -1120,8 +1134,7 @@ class _AdminPageState extends State<AdminPage> {
               ],
               onSelected: (value) async {
                 if (value == 'edit') {
-                  // Set form values for editing
-                  _namaController.text = kegiatan['nama'] ?? '';
+                  _judulController.text = kegiatan['judul'] ?? '';
                   _deskripsiController.text = kegiatan['deskripsi'] ?? '';
                   _tanggalController.text = kegiatan['tanggal'] ??
                       DateFormat('yyyy-MM-dd').format(DateTime.now());
@@ -1131,12 +1144,13 @@ class _AdminPageState extends State<AdminPage> {
 
                   setState(() {
                     _showKegiatanForm = true;
-                    _currentKegiatanId = kegiatan['_id'];
+                    _currentKegiatanId =
+                        kegiatan['id']; 
                   });
                 } else if (value == 'delete') {
                   bool confirm = await _showDeleteConfirmationDialog();
                   if (confirm) {
-                    _hapusKegiatan(kegiatan['_id']);
+                    _hapusKegiatan(kegiatan['id']);
                   }
                 }
               },
