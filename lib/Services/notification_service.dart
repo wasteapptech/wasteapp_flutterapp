@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wasteapptest/Support_Page/news_page.dart';
 import 'package:wasteapptest/main.dart';
+import 'dart:typed_data';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -176,12 +177,51 @@ class NotificationService {
   }
 
   Future<void> _showLocalNotification(
-    String title,
-    String body, {
-    String? payload,
-  }) async {
-    const AndroidNotificationDetails androidDetails =
-        AndroidNotificationDetails(
+  String title,
+  String body, {
+  String? payload,
+}) async {
+  Map<String, dynamic> data = {};
+  String? imageUrl;
+  
+  // Parse payload to extract image URL if available
+  if (payload != null && payload.isNotEmpty) {
+    try {
+      data = json.decode(payload);
+      // Check for image URL in different possible locations
+      imageUrl = data['image_url'] ?? 
+                (data['notification'] != null ? data['notification']['image'] : null) ??
+                (data['android'] != null && data['android']['notification'] != null ? 
+                  data['android']['notification']['imageUrl'] : null);
+    } catch (e) {
+      print('Error parsing notification payload: $e');
+    }
+  }
+
+  AndroidNotificationDetails androidDetails;
+  
+  if (imageUrl != null && imageUrl.isNotEmpty) {
+    // Create a notification with big picture style using URL directly
+    final BigPictureStyleInformation bigPictureStyle = BigPictureStyleInformation(
+      ByteArrayAndroidBitmap(await _getImageBytesFromUrl(imageUrl)),
+      contentTitle: title,
+      summaryText: body,
+    );
+    
+    androidDetails = AndroidNotificationDetails(
+      'wasteapp_channel',
+      'WasteApp Updates',
+      channelDescription: 'Channel for WasteApp notifications',
+      importance: Importance.high,
+      priority: Priority.high,
+      showWhen: true,
+      enableVibration: true,
+      playSound: true,
+      styleInformation: bigPictureStyle,
+    );
+  } else {
+    // Default notification without image
+    androidDetails = const AndroidNotificationDetails(
       'wasteapp_channel',
       'WasteApp Updates',
       channelDescription: 'Channel for WasteApp notifications',
@@ -191,26 +231,51 @@ class NotificationService {
       enableVibration: true,
       playSound: true,
     );
+  }
 
-    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+  DarwinNotificationDetails iosDetails;
+  
+  if (imageUrl != null && imageUrl.isNotEmpty) {
+    // For iOS notification with image (using attachment URL)
+    iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+      attachments: [
+        DarwinNotificationAttachment(
+          imageUrl,
+          identifier: 'image',
+        )
+      ],
+    );
+  } else {
+    // Default iOS notification
+    iosDetails = const DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
     );
-
-    const NotificationDetails platformDetails = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
-
-    await _flutterLocalNotificationsPlugin.show(
-      DateTime.now().millisecondsSinceEpoch ~/ 1000,
-      title,
-      body,
-      platformDetails,
-      payload: payload,
-    );
   }
+
+  final NotificationDetails platformDetails = NotificationDetails(
+    android: androidDetails,
+    iOS: iosDetails,
+  );
+
+  await _flutterLocalNotificationsPlugin.show(
+    DateTime.now().millisecondsSinceEpoch ~/ 1000,
+    title,
+    body,
+    platformDetails,
+    payload: payload,
+  );
+}
+
+// Helper function to get image bytes from URL without saving
+Future<Uint8List> _getImageBytesFromUrl(String url) async {
+  final http.Response response = await http.get(Uri.parse(url));
+  return response.bodyBytes;
+}
 
   Future<List<Map<String, dynamic>>> fetchNews() async {
     try {
