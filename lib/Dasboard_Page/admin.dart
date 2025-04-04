@@ -3,6 +3,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class AdminPage extends StatefulWidget {
   const AdminPage({super.key});
@@ -26,8 +28,10 @@ class _AdminPageState extends State<AdminPage> {
   final TextEditingController _tanggalController = TextEditingController();
   DateTime? _selectedDate;
   String? _currentKegiatanId;
+  File? _selectedImage;
 
   List<dynamic> _kegiatanList = [];
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -44,6 +48,21 @@ class _AdminPageState extends State<AdminPage> {
     _deskripsiController.dispose();
     _tanggalController.dispose();
     super.dispose();
+  }
+
+  Future<void> _selectImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _selectedImage = File(image.path);
+      });
+    }
+  }
+
+  Future<void> _removeImage() async {
+    setState(() {
+      _selectedImage = null;
+    });
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -113,7 +132,6 @@ class _AdminPageState extends State<AdminPage> {
     }
   }
 
-  // Update the fetch kegiatan function
   Future<void> _fetchKegiatan() async {
     setState(() {
       _isLoading = true;
@@ -143,8 +161,7 @@ class _AdminPageState extends State<AdminPage> {
     }
   }
 
-// Update the tambah/update kegiatan function
-  Future<void> _tambahKegiatan() async {
+  Future<void> _uploadKegiatan() async {
     if (_judulController.text.isEmpty || _deskripsiController.text.isEmpty) {
       _showErrorDialog('Judul dan deskripsi harus diisi');
       return;
@@ -155,30 +172,27 @@ class _AdminPageState extends State<AdminPage> {
     });
 
     try {
-      final response;
-      if (_currentKegiatanId != null) {
-        response = await http.put(
-          Uri.parse(
-              'https://api-wasteapp.vercel.app/api/kegiatan/$_currentKegiatanId'),
-          headers: {'Content-Type': 'application/json'},
-          body: json.encode({
-            'judul': _judulController.text,
-            'tanggal': _tanggalController.text,
-            'deskripsi': _deskripsiController.text,
-          }),
-        );
-      } else {
-        response = await http.post(
-          Uri.parse('https://api-wasteapp.vercel.app/api/kegiatan'),
-          headers: {'Content-Type': 'application/json'},
-          body: json.encode({
-            'judul': _judulController.text,
-            'tanggal': _tanggalController.text,
-            'deskripsi': _deskripsiController.text,
-          }),
+      var request = http.MultipartRequest(
+        _currentKegiatanId != null ? 'PUT' : 'POST',
+        Uri.parse(_currentKegiatanId != null
+            ? 'https://api-wasteapp.vercel.app/api/kegiatan/$_currentKegiatanId'
+            : 'https://api-wasteapp.vercel.app/api/kegiatan'),
+      );
+
+      request.fields['judul'] = _judulController.text;
+      request.fields['tanggal'] = _tanggalController.text;
+      request.fields['deskripsi'] = _deskripsiController.text;
+
+      if (_selectedImage != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'gambar',
+            _selectedImage!.path,
+          ),
         );
       }
 
+      final response = await request.send();
       if (response.statusCode == 200 || response.statusCode == 201) {
         _judulController.clear();
         _deskripsiController.clear();
@@ -186,6 +200,7 @@ class _AdminPageState extends State<AdminPage> {
           _showKegiatanForm = false;
           _isLoading = false;
           _currentKegiatanId = null;
+          _selectedImage = null;
         });
         _fetchKegiatan();
         _showSuccessDialog(
@@ -208,14 +223,12 @@ class _AdminPageState extends State<AdminPage> {
     }
   }
 
-// Update the delete function
   Future<void> _hapusKegiatan(String id) async {
     try {
       final url = 'https://api-wasteapp.vercel.app/api/kegiatan/$id';
       final response = await http.delete(Uri.parse(url));
 
       if (response.statusCode == 200) {
-        // Refresh the kegiatan list after successful deletion
         _fetchKegiatan();
         await _showSuccessDialog(message: 'Kegiatan berhasil dihapus');
       } else {
@@ -400,6 +413,7 @@ class _AdminPageState extends State<AdminPage> {
       _kegiatanList.clear();
       _selectedTabIndex = 0;
       _currentKegiatanId = null;
+      _selectedImage = null;
     });
   }
 
@@ -900,6 +914,7 @@ class _AdminPageState extends State<AdminPage> {
                     _currentKegiatanId = null;
                     _judulController.clear();
                     _deskripsiController.clear();
+                    _selectedImage = null;
                   });
                 },
               ),
@@ -909,7 +924,7 @@ class _AdminPageState extends State<AdminPage> {
           TextField(
             controller: _judulController,
             decoration: InputDecoration(
-              labelText: 'judul Kegiatan',
+              labelText: 'Judul Kegiatan',
               labelStyle: TextStyle(color: Colors.grey[600]),
               prefixIcon: Icon(Icons.event, color: Colors.green[700]),
               border: OutlineInputBorder(
@@ -966,6 +981,85 @@ class _AdminPageState extends State<AdminPage> {
             ),
           ),
           const SizedBox(height: 16),
+          // Image upload section
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Gambar Kegiatan',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+              if (_selectedImage != null)
+                Stack(
+                  children: [
+                    Container(
+                      height: 150,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        image: DecorationImage(
+                          image: FileImage(_selectedImage!),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: CircleAvatar(
+                        backgroundColor: Colors.red[700],
+                        radius: 16,
+                        child: IconButton(
+                          icon: const Icon(Icons.close,
+                              size: 16, color: Colors.white),
+                          onPressed: _removeImage,
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              else
+                GestureDetector(
+                  onTap: _selectImage,
+                  child: Container(
+                    height: 150,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.grey[300]!,
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.add_photo_alternate,
+                          size: 40,
+                          color: Colors.grey[500],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Tambahkan Gambar',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
@@ -976,6 +1070,7 @@ class _AdminPageState extends State<AdminPage> {
                       _currentKegiatanId = null;
                       _judulController.clear();
                       _deskripsiController.clear();
+                      _selectedImage = null;
                     });
                   },
                   style: OutlinedButton.styleFrom(
@@ -992,7 +1087,7 @@ class _AdminPageState extends State<AdminPage> {
               const SizedBox(width: 16),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: _tambahKegiatan,
+                  onPressed: _uploadKegiatan,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green[700],
                     foregroundColor: Colors.white,
@@ -1067,94 +1162,110 @@ class _AdminPageState extends State<AdminPage> {
               ),
             ],
           ),
-          child: ListTile(
-            contentPadding: const EdgeInsets.all(16),
-            leading: Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: Colors.green[50],
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                Icons.event,
-                color: Colors.green[700],
-              ),
-            ),
-            title: Text(
-              kegiatan['judul'] ?? 'No Title',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.green[700],
-              ),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 8),
-                Text(
-                  kegiatan['deskripsi'] ?? 'No Description',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.grey[800],
+          child: Column(
+            children: [
+              if (kegiatan['gambar'] != null)
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(12),
+                  ),
+                  child: Image.network(
+                    kegiatan['gambar'],
+                    height: 150,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
                   ),
                 ),
-                const SizedBox(height: 8),
-                Row(
+              ListTile(
+                contentPadding: const EdgeInsets.all(16),
+                leading: Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: Colors.green[50],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.event,
+                    color: Colors.green[700],
+                  ),
+                ),
+                title: Text(
+                  kegiatan['judul'] ?? 'No Title',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green[700],
+                  ),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      Icons.calendar_today,
-                      size: 14,
-                      color: Colors.grey[600],
-                    ),
-                    const SizedBox(width: 4),
+                    const SizedBox(height: 8),
                     Text(
-                      'Tanggal: ${kegiatan['tanggal'] ?? 'No Date'}',
+                      kegiatan['deskripsi'] ?? 'No Description',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
+                        color: Colors.grey[800],
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          size: 14,
+                          color: Colors.grey[600],
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Tanggal: ${kegiatan['tanggal'] ?? 'No Date'}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
-            trailing: PopupMenuButton(
-              icon: const Icon(Icons.more_vert),
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'edit',
-                  child: Text('Edit'),
-                ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Text('Hapus'),
-                ),
-              ],
-              onSelected: (value) async {
-                if (value == 'edit') {
-                  _judulController.text = kegiatan['judul'] ?? '';
-                  _deskripsiController.text = kegiatan['deskripsi'] ?? '';
-                  _tanggalController.text = kegiatan['tanggal'] ??
-                      DateFormat('yyyy-MM-dd').format(DateTime.now());
-                  _selectedDate =
-                      DateTime.tryParse(kegiatan['tanggal'] ?? '') ??
-                          DateTime.now();
+                trailing: PopupMenuButton(
+                  icon: const Icon(Icons.more_vert),
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Text('Edit'),
+                    ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Text('Hapus'),
+                    ),
+                  ],
+                  onSelected: (value) async {
+                    if (value == 'edit') {
+                      _judulController.text = kegiatan['judul'] ?? '';
+                      _deskripsiController.text = kegiatan['deskripsi'] ?? '';
+                      _tanggalController.text = kegiatan['tanggal'] ??
+                          DateFormat('yyyy-MM-dd').format(DateTime.now());
+                      _selectedDate =
+                          DateTime.tryParse(kegiatan['tanggal'] ?? '') ??
+                              DateTime.now();
 
-                  setState(() {
-                    _showKegiatanForm = true;
-                    _currentKegiatanId =
-                        kegiatan['id']; 
-                  });
-                } else if (value == 'delete') {
-                  bool confirm = await _showDeleteConfirmationDialog();
-                  if (confirm) {
-                    _hapusKegiatan(kegiatan['id']);
-                  }
-                }
-              },
-            ),
+                      setState(() {
+                        _showKegiatanForm = true;
+                        _currentKegiatanId = kegiatan['id'];
+                        _selectedImage = null;
+                      });
+                    } else if (value == 'delete') {
+                      bool confirm = await _showDeleteConfirmationDialog();
+                      if (confirm) {
+                        _hapusKegiatan(kegiatan['id']);
+                      }
+                    }
+                  },
+                ),
+              ),
+            ],
           ),
         );
       },

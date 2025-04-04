@@ -29,64 +29,61 @@ class _NewsPageState extends State<NewsPage> {
     fetchKegiatan();
   }
 
- Future<void> fetchNews() async {
-  const newsapiurl = 'https://api-wasteapp.vercel.app/api/news';
-  
-  try {
-    final response = await http.get(Uri.parse(newsapiurl));
+  Future<void> fetchNews() async {
+    const newsapiurl = 'https://api-wasteapp.vercel.app/api/news';
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
+    try {
+      final response = await http.get(Uri.parse(newsapiurl));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (mounted) {
+          setState(() {
+            newsItems = List<Map<String, dynamic>>.from(data).take(5).toList();
+            isLoadingNews = false;
+          });
+        }
+      } else {
+        throw Exception('Gagal memuat berita dari server lokal');
+      }
+    } catch (e) {
       if (mounted) {
         setState(() {
-          newsItems = List<Map<String, dynamic>>.from(data)
-              .take(5) // Take only 5 latest news
-              .toList();
           isLoadingNews = false;
         });
+        _showErrorDialog('Gagal memuat berita. Silakan coba lagi nanti.');
       }
-    } else {
-      throw Exception('Gagal memuat berita dari server lokal');
+      debugPrint('Error fetching news: $e');
     }
-  } catch (e) {
-    if (mounted) {
-      setState(() {
-        isLoadingNews = false;
-      });
-      _showErrorDialog('Gagal memuat berita. Silakan coba lagi nanti.');
-    }
-    debugPrint('Error fetching news: $e');
   }
-}
 
   Future<void> fetchKegiatan() async {
-  const url = 'https://api-wasteapp.vercel.app/api/kegiatan';
+    const url = 'https://api-wasteapp.vercel.app/api/kegiatan';
 
-  try {
-    final response = await http.get(Uri.parse(url));
+    try {
+      final response = await http.get(Uri.parse(url));
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (mounted) {
+          setState(() {
+            kegiatanItems =
+                List<Map<String, dynamic>>.from(data).take(3).toList();
+            isLoadingKegiatan = false;
+          });
+        }
+      } else {
+        throw Exception('Gagal memuat kegiatan');
+      }
+    } catch (e) {
       if (mounted) {
         setState(() {
-          kegiatanItems = List<Map<String, dynamic>>.from(data)
-              .take(3)
-              .toList();
           isLoadingKegiatan = false;
         });
+        _showErrorDialog('Gagal memuat kegiatan. Silakan coba lagi nanti.');
       }
-    } else {
-      throw Exception('Gagal memuat kegiatan');
-    }
-  } catch (e) {
-    if (mounted) {
-      setState(() {
-        isLoadingKegiatan = false;
-      });
-      _showErrorDialog('Gagal memuat kegiatan. Silakan coba lagi nanti.');
     }
   }
-}
 
   Future<void> _launchURL(String? url) async {
     if (url == null || url.isEmpty) {
@@ -333,197 +330,180 @@ class _NewsPageState extends State<NewsPage> {
     );
   }
 
-
-// ... (keep all imports and other code above the same)
-
-Widget _buildNewsCard(Map<String, dynamic> article) {
-  return Container(
-    margin: const EdgeInsets.only(bottom: 16),
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.05),
-          blurRadius: 10,
-          offset: const Offset(0, 4),
-        ),
-      ],
-    ),
-    child: Material(
-      borderRadius: BorderRadius.circular(16),
-      color: Colors.white,
-      child: InkWell(
+  Widget _buildNewsCard(Map<String, dynamic> article) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => _launchURL(article['url']),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Image with gradient overlay
-            Stack(
-              children: [
-                if (article['image'] != null)
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(16)),
-                    child: Image.network(
-                      article['image'],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => _launchURL(article['url']),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Stack(
+                children: [
+                  if (article['image'] != null)
+                    ClipRRect(
+                      borderRadius:
+                          const BorderRadius.vertical(top: Radius.circular(16)),
+                      child: Image.network(
+                        article['image'],
+                        height: 180,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return SizedBox(
+                            height: 180,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes !=
+                                        null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                    : null,
+                                color: const Color(0xFF2cac69),
+                              ),
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            height: 180,
+                            color: Colors.grey[100],
+                            child: const Center(
+                              child: Icon(
+                                Icons.image_not_supported,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    )
+                  else
+                    Container(
                       height: 180,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return SizedBox(
-                          height: 180,
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
-                                  : null,
-                              color: const Color(0xFF2cac69),
-                            ),
-                          ),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          height: 180,
-                          color: Colors.grey[100],
-                          child: const Center(
-                            child: Icon(
-                              Icons.image_not_supported,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        );
-                      },
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(16)),
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.article_outlined,
+                          color: Colors.grey,
+                          size: 40,
+                        ),
+                      ),
                     ),
-                  )
-                else
                   Container(
                     height: 180,
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(16)),
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.article_outlined,
-                        color: Colors.grey,
-                        size: 40,
+                      borderRadius:
+                          const BorderRadius.vertical(top: Radius.circular(16)),
+                      gradient: LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                        colors: [
+                          Colors.black.withOpacity(0.5),
+                          Colors.transparent,
+                        ],
                       ),
                     ),
                   ),
-                // Gradient overlay
-                Container(
-                  height: 180,
-                  decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(16)),
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
-                      colors: [
-                        Colors.black.withOpacity(0.5),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-                // Category badge
-                Positioned(
-                  top: 16,
-                  left: 16,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF2cac69),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      article['category'] ?? 'Berita',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                  // Category badge
+                  Positioned(
+                    top: 16,
+                    left: 16,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2cac69),
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            // Content
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    article['title'] ?? 'Tidak ada judul',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    article['description'] ?? 'Tidak ada deskripsi',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.access_time,
-                        size: 16,
-                        color: Colors.grey,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Baru saja',
-                        style: TextStyle(
+                      child: Text(
+                        article['category'] ?? 'Berita',
+                        style: const TextStyle(
+                          color: Colors.white,
                           fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        'Baca selengkapnya',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.green[700],
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.arrow_forward,
-                        size: 16,
-                        color: Colors.green[700],
-                      ),
-                    ],
+                    ),
                   ),
                 ],
               ),
-            ),
-          ],
+              // Content
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      article['title'] ?? 'Tidak ada judul',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      article['description'] ?? 'Tidak ada deskripsi',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        const Spacer(),
+                        Text(
+                          'Baca selengkapnya',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.green[700],
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.arrow_forward,
+                          size: 16,
+                          color: Colors.green[700],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
-Widget _buildKegiatanCard(Map<String, dynamic> kegiatan) {
+ Widget _buildKegiatanCard(Map<String, dynamic> kegiatan) {
   final String? tanggalStr = kegiatan['tanggal'];
   String formattedDate = 'Tanggal tidak tersedia';
 
@@ -561,94 +541,138 @@ Widget _buildKegiatanCard(Map<String, dynamic> kegiatan) {
         onTap: () {
           // Add navigation to kegiatan detail if needed
         },
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF2cac69), Color(0xFF30CF7A)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.event,
-                      color: Colors.white,
-                      size: 30,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          kegiatan['judul'] ?? 'Kegiatan tanpa judul',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image section
+            if (kegiatan['gambarUrl'] != null)
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16)),
+                child: Image.network(
+                  kegiatan['gambarUrl'],
+                  height: 180,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return SizedBox(
+                      height: 180,
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                              : null,
+                          color: const Color(0xFF2cac69),
                         ),
-                        const SizedBox(height: 4),
-                        Row(
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 180,
+                      color: Colors.grey[100],
+                      child: const Center(
+                        child: Icon(
+                          Icons.image_not_supported,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            // Content section
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF2cac69), Color(0xFF30CF7A)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.event,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(
-                              Icons.calendar_today,
-                              size: 14,
-                              color: Colors.grey,
-                            ),
-                            const SizedBox(width: 4),
                             Text(
-                              formattedDate,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[600],
+                              kegiatan['judul'] ?? 'Kegiatan tanpa judul',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
                               ),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.calendar_today,
+                                  size: 14,
+                                  color: Colors.grey,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  formattedDate,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    kegiatan['deskripsi'] ?? 'Tidak ada deskripsi kegiatan',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        top: BorderSide(
+                          color: Colors.grey[200]!,
+                          width: 1,
+                        ),
+                      ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              Text(
-                kegiatan['deskripsi'] ?? 'Tidak ada deskripsi kegiatan',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[800],
-                ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  border: Border(
-                    top: BorderSide(
-                      color: Colors.grey[200]!,
-                      width: 1,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     ),
   );
 }
-
 
   Widget _buildEmptyState({required String title}) {
     return Center(
@@ -703,7 +727,7 @@ Widget _buildKegiatanCard(Map<String, dynamic> kegiatan) {
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

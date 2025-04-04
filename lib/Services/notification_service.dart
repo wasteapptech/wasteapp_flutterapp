@@ -1,9 +1,12 @@
 import 'dart:convert';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wasteapptest/Support_Page/news_page.dart';
+import 'package:wasteapptest/main.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -19,26 +22,28 @@ class NotificationService {
 
   // Background message handler (must be static or top-level)
   @pragma('vm:entry-point')
-  static Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  static Future<void> firebaseMessagingBackgroundHandler(
+      RemoteMessage message) async {
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp();
     await NotificationService()._handleBackgroundMessage(message);
   }
 
   Future<void> initialize() async {
-    // Set background handler first
+    // Set background handler
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-    
+
     await _requestNotificationPermissions();
     await _configureLocalNotifications();
     _setupFirebaseMessaging();
     await _registerDeviceToken();
-    
-    // Handle any initial notification when app is opened from terminated state
     await _handleInitialNotification();
   }
 
   Future<void> _requestNotificationPermissions() async {
     try {
-      NotificationSettings settings = await _firebaseMessaging.requestPermission(
+      NotificationSettings settings =
+          await _firebaseMessaging.requestPermission(
         alert: true,
         badge: true,
         sound: true,
@@ -46,14 +51,6 @@ class NotificationService {
       );
 
       print('Notification permission status: ${settings.authorizationStatus}');
-      
-      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-        print('User granted notification permission');
-      } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
-        print('User granted provisional notification permission');
-      } else {
-        print('User declined or has not accepted notification permission');
-      }
     } catch (e) {
       print('Error requesting notification permissions: $e');
     }
@@ -79,18 +76,19 @@ class NotificationService {
     await _flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
-        // Handle notification tap here
         print('Notification tapped: ${response.payload}');
+        if (navigatorKey.currentState != null) {
+          navigatorKey.currentState!.push(
+            MaterialPageRoute(builder: (context) => const NewsPage()),
+          );
+        }
       },
     );
   }
 
   void _setupFirebaseMessaging() {
-    // Foreground messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('Got a message whilst in the foreground!');
-      print('Message data: ${message.data}');
-
+      print('Foreground message received: ${message.notification?.title}');
       if (message.notification != null) {
         _showLocalNotification(
           message.notification?.title ?? 'WasteApp Update',
@@ -100,7 +98,6 @@ class NotificationService {
       }
     });
 
-    // When app is in background but not terminated
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       print('App opened from background via notification');
       _handleNotification(message);
@@ -108,7 +105,8 @@ class NotificationService {
   }
 
   Future<void> _handleInitialNotification() async {
-    RemoteMessage? initialMessage = await _firebaseMessaging.getInitialMessage();
+    RemoteMessage? initialMessage =
+        await _firebaseMessaging.getInitialMessage();
     if (initialMessage != null) {
       print('App opened from terminated state via notification');
       _handleNotification(initialMessage);
@@ -116,14 +114,11 @@ class NotificationService {
   }
 
   Future<void> _handleBackgroundMessage(RemoteMessage message) async {
-    print('Handling a background message: ${message.messageId}');
-    
-    // Initialize plugins in background isolate
-    WidgetsFlutterBinding.ensureInitialized();
+    print('Handling background message: ${message.messageId}');
     await _configureLocalNotifications();
 
     if (message.notification != null) {
-      _showLocalNotification(
+      await _showLocalNotification(
         message.notification?.title ?? 'WasteApp Update',
         message.notification?.body ?? 'New content available',
         payload: json.encode(message.data),
@@ -132,11 +127,14 @@ class NotificationService {
   }
 
   void _handleNotification(RemoteMessage message) {
-    // Handle navigation or other actions based on message data
     print('Notification data: ${message.data}');
-    
-    // Example: You might want to navigate to specific screen based on data
-    // Navigator.of(context).pushNamed('/some-route');
+
+    // Check if the app is in a state where navigation is possible
+    if (navigatorKey.currentState != null) {
+      navigatorKey.currentState!.push(
+        MaterialPageRoute(builder: (context) => const NewsPage()),
+      );
+    }
   }
 
   Future<void> _registerDeviceToken() async {
@@ -149,30 +147,31 @@ class NotificationService {
         final registeredToken = prefs.getString(_fcmTokenKey);
 
         if (registeredToken != token) {
-          print('Registering new token with server...');
-          final response = await http.post(
-            Uri.parse('$_apiBaseUrl/notification/register-token'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: json.encode({'token': token}),
-          ).timeout(const Duration(seconds: 10));
+          print('Registering new token...');
+          final response = await http
+              .post(
+                Uri.parse('$_apiBaseUrl/notification/register-token'),
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json',
+                },
+                body: json.encode({'token': token}),
+              )
+              .timeout(const Duration(seconds: 10));
 
           if (response.statusCode == 200) {
             await prefs.setString(_fcmTokenKey, token);
-            print('Successfully registered FCM token with server');
+            print('Token registered successfully');
           } else {
             throw Exception(
-                'Failed with status ${response.statusCode}: ${response.body}');
+                'Failed: ${response.statusCode} - ${response.body}');
           }
         } else {
           print('Token already registered');
         }
       }
     } catch (e) {
-      print('Error registering device token: $e');
-      // Consider retry logic here
+      print('Error registering token: $e');
     }
   }
 
@@ -181,7 +180,8 @@ class NotificationService {
     String body, {
     String? payload,
   }) async {
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
       'wasteapp_channel',
       'WasteApp Updates',
       channelDescription: 'Channel for WasteApp notifications',
@@ -204,7 +204,7 @@ class NotificationService {
     );
 
     await _flutterLocalNotificationsPlugin.show(
-      DateTime.now().millisecondsSinceEpoch ~/ 1000, // Unique ID
+      DateTime.now().millisecondsSinceEpoch ~/ 1000,
       title,
       body,
       platformDetails,
@@ -244,7 +244,6 @@ class NotificationService {
     }
   }
 
-  // Additional utility methods
   Future<String?> getFcmToken() async {
     return await _firebaseMessaging.getToken();
   }

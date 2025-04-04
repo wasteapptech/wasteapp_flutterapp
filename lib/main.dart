@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wasteapptest/Dasboard_Page/dashboard.dart';
@@ -11,7 +12,9 @@ void main() async {
   final bool isLoggedIn = await getLoginStatus();
 
   await Firebase.initializeApp();
-  
+    FirebaseMessaging.onBackgroundMessage(
+    NotificationService.firebaseMessagingBackgroundHandler,
+  );
   final notificationService = NotificationService();
   await notificationService.initialize();
   
@@ -23,6 +26,8 @@ Future<bool> getLoginStatus() async {
   return prefs.getBool('isLoggedIn') ?? false;
 }
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 class MyApp extends StatelessWidget {
   final bool isLoggedIn;
 
@@ -31,6 +36,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'WasteApp',
       home: isLoggedIn ? const DashboardScreen() : const SplashScreen(),
     );
