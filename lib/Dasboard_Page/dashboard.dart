@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:wasteapptest/Profile_Page/profile.dart';
 import 'package:wasteapptest/Services/waste_chat_page.dart';
@@ -5,6 +7,9 @@ import 'package:wasteapptest/Support_Page/news_page.dart';
 import 'package:wasteapptest/Dasboard_Page/survey.dart';
 import 'package:wasteapptest/Dasboard_Page/admin.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'package:carousel_slider/carousel_slider.dart';
+import 'package:shimmer/shimmer.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -15,12 +20,40 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
-  String userName = 'Pengguna'; // Default value
+  String userName = 'Pengguna';
+  List<dynamic> banners = [];
+  bool isLoadingBanners = true;
+  int _currentBannerIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _fetchBanners();
+  }
+
+  Future<void> _fetchBanners() async {
+    try {
+      final response = await http.get(
+        Uri.parse('https://api-wasteapp.vercel.app/api/kegiatan'),
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          banners = json.decode(response.body);
+          isLoadingBanners = false;
+        });
+      } else {
+        setState(() {
+          isLoadingBanners = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        isLoadingBanners = false;
+      });
+      print('Error fetching banners: $e');
+    }
   }
 
   Future<void> _loadUserData() async {
@@ -90,15 +123,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Akses Cepat',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF333333),
-                        ),
+                      const Row(
+                        children: [
+                          Icon(
+                            Icons.bolt_outlined,
+                            color: Color(0xFF2cac69),
+                            size: 20,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Akses Cepat',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF333333),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 16),
                       GridView.count(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
@@ -142,13 +184,56 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Informasi & Layanan',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF333333),
-                        ),
+                      const Row(
+                        children: [
+                          Icon(
+                            Icons
+                                .event_outlined, // Using event icon for Waste Event
+                            color: Color(0xFF2cac69),
+                            size: 20,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Waste Event',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF333333),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _buildBannerCarousel(),
+                      const SizedBox(height: 8),
+                      _buildBannerIndicator(),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            color: Color(0xFF2cac69),
+                            size: 20,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Informasi & Layanan',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF333333),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 16),
                       _buildSurveyCard(context),
@@ -359,6 +444,148 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildBannerCarousel() {
+    if (isLoadingBanners) {
+      return _buildBannerSkeleton();
+    }
+
+    if (banners.isEmpty) {
+      return Container(
+        height: 150,
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Center(
+          child: Text(
+            'Tidak ada event saat ini',
+            style: TextStyle(color: Colors.grey),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        CarouselSlider(
+          items: banners.map((banner) {
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 2),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.network(
+                      banner['gambarUrl'],
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: Colors.grey[200],
+                          child: const Icon(Icons.broken_image,
+                              color: Colors.grey),
+                        );
+                      },
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                          colors: [
+                            Colors.black.withOpacity(0.7),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      left: 16,
+                      right: 16,
+                      bottom: 16,
+                      child: Text(
+                        banner['judul'],
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+          options: CarouselOptions(
+            height: 150,
+            autoPlay: true,
+            enlargeCenterPage: true,
+            aspectRatio: 16 / 9,
+            autoPlayCurve: Curves.fastOutSlowIn,
+            enableInfiniteScroll: true,
+            autoPlayAnimationDuration: const Duration(milliseconds: 800),
+            viewportFraction: 1.0,
+            onPageChanged: (index, reason) {
+              setState(() {
+                _currentBannerIndex = index;
+              });
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBannerSkeleton() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Container(
+        height: 150,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBannerIndicator() {
+    if (isLoadingBanners || banners.isEmpty) {
+      return const SizedBox();
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: banners.asMap().entries.map((entry) {
+        return Container(
+          width: 8.0,
+          height: 8.0,
+          margin: const EdgeInsets.symmetric(horizontal: 4.0),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: _currentBannerIndex == entry.key
+                ? const Color(0xFF2cac69)
+                : Colors.grey.withOpacity(0.4),
+          ),
+        );
+      }).toList(),
     );
   }
 
