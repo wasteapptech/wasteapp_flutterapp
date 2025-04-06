@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:wasteapptest/Support_Page/news_page.dart';
+import 'package:wasteapptest/Presentasion_page/page/nav_section/news_page.dart';
 import 'package:wasteapptest/main.dart';
 
 class NotificationService {
@@ -20,7 +20,6 @@ class NotificationService {
   final String _apiBaseUrl = 'https://api-wasteapp.vercel.app/api';
   static const String _fcmTokenKey = 'registeredFcmToken';
 
-  // Background message handler (must be static or top-level)
   @pragma('vm:entry-point')
   static Future<void> firebaseMessagingBackgroundHandler(
       RemoteMessage message) async {
@@ -30,7 +29,6 @@ class NotificationService {
   }
 
   Future<void> initialize() async {
-    // Set background handler
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
     await _requestNotificationPermissions();
@@ -157,7 +155,7 @@ class NotificationService {
                 },
                 body: json.encode({'token': token}),
               )
-              .timeout(const Duration(seconds: 10));
+              .timeout(const Duration(seconds: 50));
 
           if (response.statusCode == 200) {
             await prefs.setString(_fcmTokenKey, token);

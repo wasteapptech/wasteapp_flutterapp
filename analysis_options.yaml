@@ -2,3 +2,4 @@ include: package:flutter_lints/flutter.yaml
 analyzer:
   errors:
     library_private_types_in_public_api: ignore
+    deprecated_member_use: ignore
