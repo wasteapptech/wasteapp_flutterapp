@@ -11,7 +11,6 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />    
 
@@ -71,7 +70,8 @@
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyBaycvWSId9QN6yQE1PbaJL8qR9wEvZuFc" />
+            android:value="AIzaSyDSdJqJacz5gZOa6gB5asistg510tZMmxY"
+            tools:replace="android:value" />
 
         <meta-data
             android:name="flutterEmbedding"
