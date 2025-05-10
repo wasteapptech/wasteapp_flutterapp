@@ -4,9 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:wasteapptest/Presentasion_page/page/dashboard_section/dashboard.dart';
-import 'package:wasteapptest/Presentasion_page/page/auth_section/login.dart';
+import 'package:wasteapptest/Presentasion_page/page/auth_section/signin.dart';
 import 'package:wasteapptest/Presentasion_page/page/nav_section/about_page.dart';
 import 'package:wasteapptest/Presentasion_page/page/nav_section/news_page.dart';
 
@@ -236,12 +235,11 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SvgPicture.asset(
-                  'assets/svg/success-svgrepo-com.svg',
-                  width: 50,
-                  height: 50,
+                Image.asset(
+                  'assets/images/congrats.png',
+                  height: MediaQuery.of(context).size.height * 0.2,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 40),
                 const Text(
                   'Success',
                   style: TextStyle(
@@ -292,11 +290,11 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SvgPicture.asset(
-                  'assets/svg/error-svgrepo-com.svg',
-                  width: 50,
-                  height: 50,
+                Image.asset(
+                  'assets/images/ohno.png',
+                  height: MediaQuery.of(context).size.height * 0.2,
                 ),
+                const SizedBox(height: 40),
                 const SizedBox(height: 20),
                 const Text(
                   'Terjadi Kesalahan',
@@ -327,6 +325,90 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 300),
+          child: Card(
+            elevation: 10,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/images/logout.png',
+                    height: MediaQuery.of(context).size.height * 0.2,
+                  ),
+                  const SizedBox(height: 40),
+                  const Text(
+                    'Logout Confirmation',
+                    style: TextStyle(
+                      fontSize: 20,
+                      color: Colors.black,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Kamu yakin ingin keluar?',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.black,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(ctx).pop();
+                        },
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(ctx).pop();
+                          _logout();
+                        },
+                        child: const Text(
+                          'Logout',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Color(0xFF2cac69),
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -476,7 +558,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 radius: 100,
                 backgroundImage: _image != null
                     ? FileImage(_image!)
-                    : const AssetImage('assets/images/TU-logogram.webp')
+                    : const AssetImage('assets/images/profile.png')
                         as ImageProvider,
               ),
               const SizedBox(height: 16),
@@ -530,8 +612,6 @@ class _ProfilePageState extends State<ProfilePage> {
                           ],
                         ),
                         const SizedBox(height: 20),
-
-                        // Profile Picture and Name
                         Center(
                           child: Column(
                             children: [
@@ -544,7 +624,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                       backgroundImage: _image != null
                                           ? FileImage(_image!)
                                           : const AssetImage(
-                                                  'assets/images/TU-logogram.webp')
+                                                  'assets/images/profile.png')
                                               as ImageProvider,
                                     ),
                                     Positioned(
@@ -700,7 +780,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         const SizedBox(height: 24),
                         Center(
                           child: Text(
-                            'Version App v1.0.4',
+                            'Version App v1.5.5',
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.grey[600],
@@ -709,7 +789,8 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton(
-                          onPressed: _logout,
+                          onPressed:
+                              _showLogoutDialog, // Changed from _logout to _showLogoutDialog
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF2cac69),
                             foregroundColor: Colors.white,

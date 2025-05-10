@@ -56,7 +56,7 @@ class AboutPage extends StatelessWidget {
               ),
               Center(
                 child: Text(
-                  'Version 2.0.4',
+                  'Version App v1.5.5',
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.grey[600],

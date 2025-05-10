@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:wasteapptest/Presentasion_page/page/dashboard_section/tempatsampah.dart';
 import 'package:wasteapptest/Presentasion_page/page/nav_section/profile.dart';
@@ -25,6 +24,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<dynamic> banners = [];
   bool isLoadingBanners = true;
   int _currentBannerIndex = 0;
+ bool _isBalanceVisible = true;
 
   @override
   void initState() {
@@ -104,7 +104,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-    void _tempatsampahterdekat(BuildContext context) {
+  void _tempatsampahterdekat(BuildContext context) {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const TempatSampahPage()),
@@ -327,7 +327,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    userName, // Use the userName from state
+                    userName,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 22,
@@ -375,23 +375,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
+                            const Spacer(),
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _isBalanceVisible = !_isBalanceVisible;
+                                });
+                              },
+                              child: Icon(
+                                _isBalanceVisible 
+                                    ? Icons.visibility 
+                                    : Icons.visibility_off,
+                                color: const Color(0xFF2cac69),
+                                size: 20,
+                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          'Rp 50.000,00',
+                          _isBalanceVisible ? 'Rp 50.000,00' : '••••••••',
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
                             color: const Color(0xFF2cac69),
                             height: 1,
-                            shadows: [
-                              Shadow(
-                                blurRadius: 10.0,
-                                color: Colors.black.withOpacity(0.05),
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
+                            shadows: _isBalanceVisible
+                                ? [
+                                    Shadow(
+                                      blurRadius: 10.0,
+                                      color: Colors.black.withOpacity(0.05),
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ]
+                                : null,
                           ),
                         ),
                       ],
@@ -459,8 +476,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (isLoadingBanners) {
       return _buildBannerSkeleton();
     }
+    final validBanners = banners
+        .where((banner) =>
+            banner['gambarUrl'] != null &&
+            banner['gambarUrl'].toString().isNotEmpty)
+        .toList();
 
-    if (banners.isEmpty) {
+    if (validBanners.isEmpty) {
       return Container(
         height: 150,
         decoration: BoxDecoration(
@@ -479,7 +501,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Column(
       children: [
         CarouselSlider(
-          items: banners.map((banner) {
+          items: validBanners.map((banner) {
             return Container(
               margin: const EdgeInsets.symmetric(horizontal: 2),
               decoration: BoxDecoration(
@@ -525,7 +547,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       right: 16,
                       bottom: 16,
                       child: Text(
-                        banner['judul'],
+                        banner['judul'] ?? 'Tanpa Judul',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
@@ -542,11 +564,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           }).toList(),
           options: CarouselOptions(
             height: 150,
-            autoPlay: true,
+            autoPlay: validBanners.length > 1,
             enlargeCenterPage: true,
             aspectRatio: 16 / 9,
             autoPlayCurve: Curves.fastOutSlowIn,
-            enableInfiniteScroll: true,
+            enableInfiniteScroll: validBanners.length > 1,
             autoPlayAnimationDuration: const Duration(milliseconds: 800),
             viewportFraction: 1.0,
             onPageChanged: (index, reason) {

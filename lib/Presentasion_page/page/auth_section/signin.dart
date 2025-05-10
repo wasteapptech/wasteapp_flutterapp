@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:wasteapptest/Presentasion_page/page/dashboard_section/dashboard.dart';
 import 'package:wasteapptest/Presentasion_page/page/auth_section/signup.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -24,56 +23,75 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   bool _isPasswordVisible = false;
 
- Future<void> _signin() async {
-  setState(() {
-    _isLoading = true;
-  });
-
-  final String name = _usernameController.text.trim();
-  final String password = _passwordController.text.trim();
-
-  if (name.isEmpty || password.isEmpty) {
+  Future<void> _signin() async {
     setState(() {
-      _isLoading = false;
+      _isLoading = true;
     });
-    _showNoInputDialog();
-    return;
-  }
 
-  final Uri url = Uri.parse('https://api-wasteapp.vercel.app/api/auth/signin');
+    final String name = _usernameController.text.trim();
+    final String password = _passwordController.text.trim();
 
-  try {
-    final http.Response response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({'name': name, 'password': password}),
-    );
-
-  if (response.statusCode == 201) {
-    final responseData = json.decode(response.body);
-    final prefs = await SharedPreferences.getInstance();
-
-    await prefs.setBool('isLoggedIn', true);
-    await prefs.setString('userName', name); // Simpan username
-    if (responseData['email'] != null) {
-      await prefs.setString('userEmail', responseData['email']);
-    } else {
-      await prefs.setString('userEmail', name); // Jika email tidak ada, gunakan nama
+    if (name.isEmpty || password.isEmpty) {
+      setState(() {
+        _isLoading = false;
+      });
+      _showNoInputDialog();
+      return;
     }
 
-    await _showSuccessDialog();
-    } else {
-      final responseBody = json.decode(response.body);
-      _showErrorDialog(responseBody['error'] ?? 'SignIn gagal');
+    final Uri url =
+        Uri.parse('https://api-wasteapp.vercel.app/api/auth/signin');
+
+    try {
+      final http.Response response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'name': name, 'password': password}),
+      );
+
+      final responseData = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        // Status 200 adalah berhasil menurut API yang diberikan
+        final prefs = await SharedPreferences.getInstance();
+
+        await prefs.setBool('isLoggedIn', true);
+        await prefs.setString('userName', name);
+
+        // Simpan email jika tersedia
+        if (responseData['user'] != null &&
+            responseData['user']['email'] != null) {
+          await prefs.setString('userEmail', responseData['user']['email']);
+        } else {
+          await prefs.setString(
+              'userEmail', name); // Jika email tidak ada, gunakan nama
+        }
+
+        // Simpan data tambahan jika diperlukan
+        if (responseData['user'] != null) {
+          if (responseData['user']['id'] != null) {
+            await prefs.setString('userId', responseData['user']['id']);
+          }
+          if (responseData['user']['profileId'] != null) {
+            await prefs.setString(
+                'profileId', responseData['user']['profileId']);
+          }
+        }
+
+        await _showSuccessDialog();
+      } else {
+        // Menampilkan pesan error dari API
+        _showErrorDialog(responseData['error'] ?? 'SignIn gagal');
+      }
+    } catch (error) {
+      _showErrorDialog(
+          'Network error. Please check your connection and try again.');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
-  } catch (error) {
-    _showErrorDialog('Network error. Please check your connection and try again.');
-  } finally {
-    setState(() {
-      _isLoading = false;
-    });
   }
-}
 
   Future<void> saveLoginStatus(bool isLoggedIn) async {
     final prefs = await SharedPreferences.getInstance();
@@ -93,56 +111,59 @@ class _LoginPageState extends State<LoginPage> {
     showDialog(
       context: context,
       builder: (ctx) => Center(
-        child: Card(
-          elevation: 10,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SvgPicture.asset(
-                  'assets/svg/confused-face-svgrepo-com.svg',
-                  width: 50,
-                  height: 50,
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Data Belum Diisi',
-                  style: TextStyle(
-                    fontSize: 20,
-                    color: Colors.black,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Poppins',
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 300),
+          child: Card(
+            elevation: 10,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/images/confused.png',
+                    height: MediaQuery.of(context).size.height * 0.2,
                   ),
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  'Anda belum menginputkan data apa pun. Silakan isi data Anda terlebih dahulu.',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.black,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(ctx).pop();
-                  },
-                  child: const Text(
-                    'OK',
+                  const SizedBox(height: 40),
+                  const Text(
+                    'Data Belum Diisi',
                     style: TextStyle(
-                      fontSize: 15,
-                      color: Color(0xFFFF9800),
+                      fontSize: 20,
+                      color: Colors.black,
                       fontWeight: FontWeight.w700,
                       fontFamily: 'Poppins',
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Anda belum menginputkan data apa pun. Silakan isi data Anda terlebih dahulu.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.black,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                    },
+                    child: const Text(
+                      'OK',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Color(0xFF2cac69),
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -154,56 +175,59 @@ class _LoginPageState extends State<LoginPage> {
     showDialog(
       context: context,
       builder: (ctx) => Center(
-        child: Card(
-          elevation: 10,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SvgPicture.asset(
-                  'assets/svg/error-svgrepo-com.svg',
-                  width: 50,
-                  height: 50,
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Terjadi Kesalahan',
-                  style: TextStyle(
-                    fontSize: 20,
-                    color: Colors.black,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Poppins',
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 300),
+          child: Card(
+            elevation: 10,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/images/ohno.png',
+                    height: MediaQuery.of(context).size.height * 0.2,
                   ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  message,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.black,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(ctx).pop();
-                  },
-                  child: const Text(
-                    'Done',
+                  const SizedBox(height: 40),
+                  const Text(
+                    'Terjadi Kesalahan',
                     style: TextStyle(
-                      fontSize: 15,
-                      color: Color(0xFF2cac69),
+                      fontSize: 20,
+                      color: Colors.black,
                       fontWeight: FontWeight.w700,
                       fontFamily: 'Poppins',
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.black,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                    },
+                    child: const Text(
+                      'Done',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Color(0xFF2cac69),
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -215,61 +239,64 @@ class _LoginPageState extends State<LoginPage> {
     return showDialog(
       context: context,
       builder: (ctx) => Center(
-        child: Card(
-          elevation: 10,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SvgPicture.asset(
-                  'assets/svg/success-svgrepo-com.svg',
-                  width: 50,
-                  height: 50,
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'SignIn Success',
-                  style: TextStyle(
-                    fontSize: 20,
-                    color: Colors.black,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  'Kamu berhasil login',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.black,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(ctx).pop();
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const DashboardScreen()),
-                    );
-                  },
-                  child: const Text(
-                    'Done',
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 300),
+          child: Card(
+            elevation: 10,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                Image.asset(
+                  'assets/images/congrats.png',
+                  height: MediaQuery.of(context).size.height * 0.2,
+              ),
+              const SizedBox(height: 40),
+                  const Text(
+                    'SignIn Success',
                     style: TextStyle(
-                      fontSize: 15,
-                      color: Color(0xFF2cac69),
+                      fontSize: 20,
+                      color: Colors.black,
                       fontWeight: FontWeight.w700,
                       fontFamily: 'Poppins',
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Kamu berhasil login',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.black,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const DashboardScreen()),
+                      );
+                    },
+                    child: const Text(
+                      'Done',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Color(0xFF2cac69),
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

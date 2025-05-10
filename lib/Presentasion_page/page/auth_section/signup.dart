@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
-import 'package:wasteapptest/Presentasion_page/page/auth_section/login.dart';
+import 'package:wasteapptest/Presentasion_page/page/auth_section/signin.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -55,7 +53,15 @@ class _SignupScreenState extends State<SignupScreen> {
       if (response.statusCode == 201) {
         _showSuccessDialog();
       } else if (response.statusCode == 400) {
-        _showUserAlreadyRegisteredDialog();
+        final errorMessage = responseData['error'] ?? 'Signup gagal';
+
+        if (errorMessage.contains('User already exists')) {
+          _showUserAlreadyRegisteredDialog();
+        } else if (errorMessage.contains('Password harus')) {
+          _showErrorDialog(errorMessage);
+        } else {
+          _showErrorDialog(errorMessage);
+        }
       } else {
         _showErrorDialog(responseData['error'] ?? 'Signup gagal');
       }
@@ -72,56 +78,59 @@ class _SignupScreenState extends State<SignupScreen> {
     showDialog(
       context: context,
       builder: (ctx) => Center(
-        child: Card(
-          elevation: 10,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SvgPicture.asset(
-                  'assets/svg/confused-face-svgrepo-com.svg',
-                  width: 50,
-                  height: 50,
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Data Belum Diisi',
-                  style: TextStyle(
-                    fontSize: 20,
-                    color: Colors.black,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Poppins',
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 300),
+          child: Card(
+            elevation: 10,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/images/confused.png',
+                    height: MediaQuery.of(context).size.height * 0.2,
                   ),
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  'Anda belum menginputkan data apa pun. Silakan isi data Anda terlebih dahulu.',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.black,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(ctx).pop();
-                  },
-                  child: const Text(
-                    'OK',
+                  const SizedBox(height: 40),
+                  const Text(
+                    'Data Belum Diisi',
                     style: TextStyle(
-                      fontSize: 15,
-                      color: Color(0xFFFF9800),
+                      fontSize: 20,
+                      color: Colors.black,
                       fontWeight: FontWeight.w700,
                       fontFamily: 'Poppins',
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Anda belum menginputkan data apa pun. Silakan isi data Anda terlebih dahulu.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.black,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                    },
+                    child: const Text(
+                      'OK',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Color(0xFF2cac69),
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -133,61 +142,64 @@ class _SignupScreenState extends State<SignupScreen> {
     showDialog(
       context: context,
       builder: (ctx) => Center(
-        child: Card(
-          elevation: 10,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SvgPicture.asset(
-                  'assets/svg/success-svgrepo-com.svg',
-                  width: 50,
-                  height: 50,
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Pendaftaran Berhasil',
-                  style: TextStyle(
-                    fontSize: 20,
-                    color: Colors.black,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Poppins',
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 300),
+          child: Card(
+            elevation: 10,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/images/congrats.png',
+                    height: MediaQuery.of(context).size.height * 0.2,
                   ),
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  'Akun Anda berhasil terdaftar.',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.black,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(ctx).pop();
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const LoginPage()),
-                    );
-                  },
-                  child: const Text(
-                    'Done',
+                  const SizedBox(height: 40),
+                  const Text(
+                    'Pendaftaran Berhasil',
                     style: TextStyle(
-                      fontSize: 15,
-                      color: Color(0xFF2cac69),
+                      fontSize: 20,
+                      color: Colors.black,
                       fontWeight: FontWeight.w700,
                       fontFamily: 'Poppins',
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Akun Anda berhasil terdaftar.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.black,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const LoginPage()),
+                      );
+                    },
+                    child: const Text(
+                      'Done',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Color(0xFF2cac69),
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -199,56 +211,59 @@ class _SignupScreenState extends State<SignupScreen> {
     showDialog(
       context: context,
       builder: (ctx) => Center(
-        child: Card(
-          elevation: 10,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SvgPicture.asset(
-                  'assets/svg/error-svgrepo-com.svg',
-                  width: 50,
-                  height: 50,
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Terjadi Kesalahan',
-                  style: TextStyle(
-                    fontSize: 20,
-                    color: Colors.black,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Poppins',
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 300),
+          child: Card(
+            elevation: 10,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/images/ohno.png',
+                    height: MediaQuery.of(context).size.height * 0.2,
                   ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  message,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.black,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(ctx).pop();
-                  },
-                  child: const Text(
-                    'Done',
+                  const SizedBox(height: 40),
+                  const Text(
+                    'Terjadi Kesalahan',
                     style: TextStyle(
-                      fontSize: 15,
-                      color: Color(0xFF2cac69),
+                      fontSize: 20,
+                      color: Colors.black,
                       fontWeight: FontWeight.w700,
                       fontFamily: 'Poppins',
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.black,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                    },
+                    child: const Text(
+                      'Done',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Color(0xFF2cac69),
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -260,56 +275,59 @@ class _SignupScreenState extends State<SignupScreen> {
     showDialog(
       context: context,
       builder: (ctx) => Center(
-        child: Card(
-          elevation: 10,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SvgPicture.asset(
-                  'assets/svg/error-svgrepo-com.svg',
-                  width: 50,
-                  height: 50,
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'User Sudah Terdaftar',
-                  style: TextStyle(
-                    fontSize: 20,
-                    color: Colors.black,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Poppins',
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 300),
+          child: Card(
+            elevation: 10,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/images/already.png',
+                    height: MediaQuery.of(context).size.height * 0.2,
                   ),
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  'User ini sudah terdaftar sebelumnya.',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.black,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(ctx).pop();
-                  },
-                  child: const Text(
-                    'OK',
+                  const SizedBox(height: 40),
+                  const Text(
+                    'User Sudah Terdaftar',
                     style: TextStyle(
-                      fontSize: 15,
-                      color: Color(0xFF2cac69),
+                      fontSize: 20,
+                      color: Colors.black,
                       fontWeight: FontWeight.w700,
                       fontFamily: 'Poppins',
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  const Text(
+                    'User ini sudah terdaftar sebelumnya.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.black,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                    },
+                    child: const Text(
+                      'OK',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Color(0xFF2cac69),
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

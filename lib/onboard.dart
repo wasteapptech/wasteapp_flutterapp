@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:wasteapptest/welcome_screen.dart';
+import 'package:wasteapptest/Presentasion_page/page/auth_section/auth_section.dart';
+import 'package:wasteapptest/notification_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -67,7 +68,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                       ),
                     ),
-
                     ],
                   );
                 },
@@ -90,7 +90,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         decoration: BoxDecoration(
                           color: _currentPage == index
                               ? const Color(0xFF2cac69)
-                              // ignore: deprecated_member_use
                               : const Color(0xFF2cac69).withOpacity(0.5),
                           borderRadius: BorderRadius.circular(4),
                         ),
@@ -103,10 +102,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: ElevatedButton(
                       onPressed: () {
                         if (_currentPage == _onboardingData.length - 1) {
+                          // Navigate to the NotificationPermissionPage after onboarding
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const WelcomeScreen(),
+                              builder: (context) => NotificationPermissionPage(
+                                onContinue: () {
+                                  // Navigate to WelcomeScreen after notification permission handling
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const WelcomeScreen(),
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
                           );
                         } else {

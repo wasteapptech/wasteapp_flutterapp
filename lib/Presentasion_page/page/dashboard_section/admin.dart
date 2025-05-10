@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
@@ -74,8 +73,8 @@ class _AdminPageState extends State<AdminPage> {
       builder: (context, child) {
         return Theme(
           data: ThemeData.light().copyWith(
-            colorScheme: ColorScheme.light(
-              primary: Colors.green[700]!,
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF2cac69),
             ),
             dialogBackgroundColor: Colors.white,
           ),
@@ -245,57 +244,59 @@ class _AdminPageState extends State<AdminPage> {
     showDialog(
       context: context,
       builder: (ctx) => Center(
-        child: Card(
-          elevation: 10,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SvgPicture.asset(
-                  'assets/svg/error-svgrepo-com.svg',
-                  width: 50,
-                  height: 50,
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Terjadi Kesalahan',
-                  style: TextStyle(
-                    fontSize: 20,
-                    color: Colors.black,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Poppins',
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 300),
+          child: Card(
+            elevation: 10,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/images/ohno.png',
+                    height: MediaQuery.of(context).size.height * 0.2,
                   ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  message,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.black,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(ctx).pop();
-                  },
-                  child: Text(
-                    'Done',
+                  const SizedBox(height: 40),
+                  const Text(
+                    'Terjadi Kesalahan',
                     style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.green[700],
+                      fontSize: 20,
+                      color: Colors.black,
                       fontWeight: FontWeight.w700,
                       fontFamily: 'Poppins',
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.black,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                    },
+                    child: const Text(
+                      'Done',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Color(0xFF2cac69),
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -322,12 +323,11 @@ class _AdminPageState extends State<AdminPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SvgPicture.asset(
-                  'assets/svg/success-svgrepo-com.svg',
-                  width: 50,
-                  height: 50,
-                ),
-                const SizedBox(height: 20),
+                Image.asset(
+                  'assets/images/congrats.png',
+                  height: MediaQuery.of(context).size.height * 0.2,
+              ),
+              const SizedBox(height: 40),
                 Text(
                   title,
                   style: const TextStyle(
@@ -352,9 +352,9 @@ class _AdminPageState extends State<AdminPage> {
                   onPressed: onPressed ?? () => Navigator.of(ctx).pop(),
                   child: Text(
                     buttonText,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 15,
-                      color: Colors.green[700],
+                      color:  Color(0xFF2cac69),
                       fontWeight: FontWeight.w700,
                       fontFamily: 'Poppins',
                     ),
@@ -457,12 +457,12 @@ class _AdminPageState extends State<AdminPage> {
               ),
             ),
             const SizedBox(height: 32),
-            Text(
+            const Text(
               'Admin Login',
-              style: TextStyle(
+              style:  TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.w800,
-                color: Colors.green[700],
+                color: Color(0xFF2cac69),
                 letterSpacing: 1.2,
               ),
             ),
@@ -487,14 +487,14 @@ class _AdminPageState extends State<AdminPage> {
             decoration: InputDecoration(
               labelText: 'Username',
               labelStyle: TextStyle(color: Colors.grey[600]),
-              prefixIcon: Icon(Icons.person, color: Colors.green[700]),
+              prefixIcon: const Icon(Icons.person, color:  Color(0xFF2cac69)),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: Colors.grey[300]!),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.green[700]!, width: 2),
+                borderSide: const BorderSide(color:  Color(0xFF2cac69), width: 2),
               ),
               filled: true,
               fillColor: Colors.grey[50],
@@ -507,7 +507,7 @@ class _AdminPageState extends State<AdminPage> {
             decoration: InputDecoration(
               labelText: 'Password',
               labelStyle: TextStyle(color: Colors.grey[600]),
-              prefixIcon: Icon(Icons.lock, color: Colors.green[700]),
+              prefixIcon: const Icon(Icons.lock, color:  Color(0xFF2cac69)),
               suffixIcon: IconButton(
                 icon: Icon(
                   _showPassword ? Icons.visibility : Icons.visibility_off,
@@ -525,7 +525,7 @@ class _AdminPageState extends State<AdminPage> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.green[700]!, width: 2),
+                borderSide: const  BorderSide(color:  Color(0xFF2cac69), width: 2),
               ),
               filled: true,
               fillColor: Colors.grey[50],
@@ -538,7 +538,7 @@ class _AdminPageState extends State<AdminPage> {
             child: ElevatedButton(
               onPressed: _adminLogin,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green[700],
+                backgroundColor: const Color(0xFF2cac69),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -581,8 +581,8 @@ class _AdminPageState extends State<AdminPage> {
   Widget _buildAdminHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      decoration: BoxDecoration(
-        color: Colors.green[700],
+      decoration: const  BoxDecoration(
+        color:  Color(0xFF2cac69),
       ),
       child: SafeArea(
         child: Row(
@@ -640,7 +640,7 @@ class _AdminPageState extends State<AdminPage> {
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
                   color: _selectedTabIndex == 0
-                      ? Colors.green[700]
+                      ? const Color(0xFF2cac69)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -681,7 +681,7 @@ class _AdminPageState extends State<AdminPage> {
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
                   color: _selectedTabIndex == 1
-                      ? Colors.green[700]
+                      ? const Color(0xFF2cac69)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -724,12 +724,12 @@ class _AdminPageState extends State<AdminPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              const Text(
                 'Daftar Kegiatan',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.green[700],
+                  color:  Color(0xFF2cac69),
                 ),
               ),
               ElevatedButton.icon(
@@ -751,7 +751,7 @@ class _AdminPageState extends State<AdminPage> {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green[700],
+                  backgroundColor: const Color(0xFF2cac69),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -777,12 +777,12 @@ class _AdminPageState extends State<AdminPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
+          const Text(
             'Daftar Harga Sampah',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.green[700],
+              color:  Color(0xFF2cac69),
             ),
           ),
           const SizedBox(height: 16),
@@ -820,7 +820,7 @@ class _AdminPageState extends State<AdminPage> {
               // Navigate to edit harga page
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green[700],
+              backgroundColor: const Color(0xFF2cac69),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -847,10 +847,10 @@ class _AdminPageState extends State<AdminPage> {
         ),
         Text(
           harga,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Colors.green[700],
+            color:  Color(0xFF2cac69),
           ),
         ),
       ],
@@ -882,10 +882,10 @@ class _AdminPageState extends State<AdminPage> {
                 _currentKegiatanId != null
                     ? 'Edit Kegiatan'
                     : 'Tambah Kegiatan Baru',
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.green[700],
+                  color:  Color(0xFF2cac69),
                 ),
               ),
               IconButton(
@@ -908,14 +908,14 @@ class _AdminPageState extends State<AdminPage> {
             decoration: InputDecoration(
               labelText: 'Judul Kegiatan',
               labelStyle: TextStyle(color: Colors.grey[600]),
-              prefixIcon: Icon(Icons.event, color: Colors.green[700]),
+              prefixIcon: const Icon(Icons.event, color:  Color(0xFF2cac69)),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: Colors.grey[300]!),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.green[700]!, width: 2),
+                borderSide: const BorderSide(color:  Color(0xFF2cac69), width: 2),
               ),
               filled: true,
               fillColor: Colors.grey[50],
@@ -928,14 +928,14 @@ class _AdminPageState extends State<AdminPage> {
             decoration: InputDecoration(
               labelText: 'Tanggal',
               labelStyle: TextStyle(color: Colors.grey[600]),
-              prefixIcon: Icon(Icons.calendar_today, color: Colors.green[700]),
+              prefixIcon: const Icon(Icons.calendar_today, color:  Color(0xFF2cac69)),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: Colors.grey[300]!),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.green[700]!, width: 2),
+                borderSide: const BorderSide(color:  Color(0xFF2cac69), width: 2),
               ),
               filled: true,
               fillColor: Colors.grey[50],
@@ -949,14 +949,14 @@ class _AdminPageState extends State<AdminPage> {
             decoration: InputDecoration(
               labelText: 'Deskripsi',
               labelStyle: TextStyle(color: Colors.grey[600]),
-              prefixIcon: Icon(Icons.description, color: Colors.green[700]),
+              prefixIcon: const Icon(Icons.description, color:  Color(0xFF2cac69)),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: Colors.grey[300]!),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.green[700]!, width: 2),
+                borderSide: const BorderSide(color:  Color(0xFF2cac69), width: 2),
               ),
               filled: true,
               fillColor: Colors.grey[50],
@@ -1056,8 +1056,8 @@ class _AdminPageState extends State<AdminPage> {
                     });
                   },
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.green[700],
-                    side: BorderSide(color: Colors.green[700]!),
+                    foregroundColor: const Color(0xFF2cac69),
+                    side: const BorderSide(color:  Color(0xFF2cac69)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -1071,7 +1071,7 @@ class _AdminPageState extends State<AdminPage> {
                 child: ElevatedButton(
                   onPressed: _uploadKegiatan,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green[700],
+                    backgroundColor: const Color(0xFF2cac69),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -1167,16 +1167,16 @@ class _AdminPageState extends State<AdminPage> {
                     color: Colors.green[50],
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.event,
-                    color: Colors.green[700],
+                    color:  Color(0xFF2cac69),
                   ),
                 ),
                 title: Text(
                   kegiatan['judul'] ?? 'No Title',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Colors.green[700],
+                    color:  Color(0xFF2cac69),
                   ),
                 ),
                 subtitle: Column(

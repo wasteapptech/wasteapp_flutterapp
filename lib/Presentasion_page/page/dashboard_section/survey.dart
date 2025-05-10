@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SurveyPage extends StatefulWidget {
@@ -158,12 +157,11 @@ class _SurveyPageState extends State<SurveyPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SvgPicture.asset(
-                  'assets/svg/error-svgrepo-com.svg',
-                  width: 50,
-                  height: 50,
-                ),
-                const SizedBox(height: 20),
+                  Image.asset(
+                    'assets/images/ohno.png',
+                    height: MediaQuery.of(context).size.height * 0.2,
+                  ),
+                  const SizedBox(height: 40),
                 const Text(
                   'Terjadi Kesalahan',
                   style: TextStyle(
@@ -219,12 +217,11 @@ class _SurveyPageState extends State<SurveyPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SvgPicture.asset(
-                  'assets/svg/success-svgrepo-com.svg',
-                  width: 50,
-                  height: 50,
-                ),
-                const SizedBox(height: 20),
+                  Image.asset(
+                    'assets/images/congrats.png',
+                    height: MediaQuery.of(context).size.height * 0.2,
+                  ),
+                  const SizedBox(height: 40),
                 const Text(
                   'Survey Submitted Successfully',
                   style: TextStyle(
@@ -279,13 +276,11 @@ class _SurveyPageState extends State<SurveyPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SvgPicture.asset(
-                'assets/svg/check-circle-svgrepo-com.svg',
-                width: 60,
-                height: 60,
-                color: const Color(0xFF2cac69),
-              ),
-              const SizedBox(height: 20),
+                  Image.asset(
+                    'assets/images/survey.png',
+                    height: MediaQuery.of(context).size.height * 0.2,
+                  ),
+                  const SizedBox(height: 40),
               const Text(
                 'Survei Telah Diisi',
                 style: TextStyle(

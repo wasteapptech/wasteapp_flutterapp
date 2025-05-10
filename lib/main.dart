@@ -6,17 +6,14 @@ import 'package:wasteapptest/Presentasion_page/page/dashboard_section/dashboard.
 import 'package:wasteapptest/Services/notification_service.dart'; 
 import 'package:wasteapptest/splash_screen.dart';
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final bool isLoggedIn = await getLoginStatus();
 
   await Firebase.initializeApp();
-    FirebaseMessaging.onBackgroundMessage(
+  FirebaseMessaging.onBackgroundMessage(
     NotificationService.firebaseMessagingBackgroundHandler,
   );
-  final notificationService = NotificationService();
-  await notificationService.initialize();
   
   runApp(MyApp(isLoggedIn: isLoggedIn));
 }
