@@ -2,7 +2,7 @@ plugins {
     id "com.android.application"
     id "kotlin-android"
     id "dev.flutter.flutter-gradle-plugin"
-    id "com.google.gms.google-services"  
+    id "com.google.gms.google-services"  // This line is added here
 }
 
 def keystoreProperties = new Properties()
@@ -15,24 +15,25 @@ android {
     namespace "com.example.wasteapptest" 
     compileSdkVersion flutter.compileSdkVersion 
     ndkVersion flutter.ndkVersion 
- 
+
     compileOptions { 
         sourceCompatibility JavaVersion.VERSION_1_8 
         targetCompatibility JavaVersion.VERSION_1_8 
     } 
- 
+
     kotlinOptions { 
         jvmTarget = '1.8' 
     } 
- 
+
     defaultConfig { 
         applicationId "com.example.wasteapptest" 
         minSdkVersion flutter.minSdkVersion
         targetSdkVersion flutter.targetSdkVersion 
         versionCode 1 
         versionName "1.0.0" 
+        multiDexEnabled true
     } 
- 
+
     signingConfigs { 
         release { 
             keyAlias = keystoreProperties['keyAlias'] 
@@ -41,23 +42,21 @@ android {
             storePassword = keystoreProperties['storePassword'] 
         } 
     } 
-    buildTypes { 
-        release { 
-            signingConfig signingConfigs.release 
-            // Enable code shrinking and obfuscation 
-            minifyEnabled true 
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro' 
-        } 
-        debug { 
-            // Disable minification for debug builds 
-            minifyEnabled false 
-        } 
-    } 
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            shrinkResources false
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
 }
 
 flutter { 
     source = "../.." 
 } 
+
 dependencies { 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"   
     // Firebase and WorkManager dependencies 
@@ -67,3 +66,6 @@ dependencies {
     implementation 'androidx.work:work-runtime:2.8.1' 
     implementation 'androidx.multidex:multidex:2.0.1' // Multidex support   
 }
+
+// Apply the Google Services plugin (this line should be at the bottom)
+apply plugin: 'com.google.gms.google-services'

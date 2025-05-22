@@ -16,6 +16,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _isPasswordVisible = false;
+
   Future<void> _signup() async {
     setState(() {
       _isLoading = true;
@@ -31,9 +32,7 @@ class _SignupScreenState extends State<SignupScreen> {
       'password': _passwordController.text.trim(),
     };
 
-    if (body['email'].isEmpty ||
-        body['name'].isEmpty ||
-        body['password'].isEmpty) {
+    if (body['email'].isEmpty || body['name'].isEmpty || body['password'].isEmpty) {
       setState(() {
         _isLoading = false;
       });
@@ -54,7 +53,6 @@ class _SignupScreenState extends State<SignupScreen> {
         _showSuccessDialog();
       } else if (response.statusCode == 400) {
         final errorMessage = responseData['error'] ?? 'Signup gagal';
-
         if (errorMessage.contains('User already exists')) {
           _showUserAlreadyRegisteredDialog();
         } else if (errorMessage.contains('Password harus')) {
@@ -79,53 +77,49 @@ class _SignupScreenState extends State<SignupScreen> {
       context: context,
       builder: (ctx) => Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 300),
+          constraints: const BoxConstraints(maxWidth: 320),
           child: Card(
-            elevation: 10,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
+            elevation: 8,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Image.asset(
                     'assets/images/confused.png',
-                    height: MediaQuery.of(context).size.height * 0.2,
+                    height: 120,
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 24),
                   const Text(
                     'Data Belum Diisi',
                     style: TextStyle(
-                      fontSize: 20,
-                      color: Colors.black,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
                       fontFamily: 'Poppins',
+                      color: Colors.black87,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   const Text(
                     'Anda belum menginputkan data apa pun. Silakan isi data Anda terlebih dahulu.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.black,
                       fontFamily: 'Poppins',
+                      color: Colors.black54,
                     ),
                   ),
                   const SizedBox(height: 20),
                   TextButton(
-                    onPressed: () {
-                      Navigator.of(ctx).pop();
-                    },
+                    onPressed: () => Navigator.of(ctx).pop(),
                     child: const Text(
                       'OK',
                       style: TextStyle(
-                        fontSize: 15,
-                        color: Color(0xFF2cac69),
-                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                         fontFamily: 'Poppins',
+                        color: Color(0xFF2cac69),
                       ),
                     ),
                   ),
@@ -143,39 +137,37 @@ class _SignupScreenState extends State<SignupScreen> {
       context: context,
       builder: (ctx) => Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 300),
+          constraints: const BoxConstraints(maxWidth: 320),
           child: Card(
-            elevation: 10,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
+            elevation: 8,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Image.asset(
                     'assets/images/congrats.png',
-                    height: MediaQuery.of(context).size.height * 0.2,
+                    height: 120,
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 24),
                   const Text(
                     'Pendaftaran Berhasil',
                     style: TextStyle(
-                      fontSize: 20,
-                      color: Colors.black,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
                       fontFamily: 'Poppins',
+                      color: Colors.black87,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   const Text(
                     'Akun Anda berhasil terdaftar.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.black,
                       fontFamily: 'Poppins',
+                      color: Colors.black54,
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -184,17 +176,16 @@ class _SignupScreenState extends State<SignupScreen> {
                       Navigator.of(ctx).pop();
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(
-                            builder: (context) => const LoginPage()),
+                        MaterialPageRoute(builder: (context) => const LoginPage()),
                       );
                     },
                     child: const Text(
                       'Done',
                       style: TextStyle(
-                        fontSize: 15,
-                        color: Color(0xFF2cac69),
-                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                         fontFamily: 'Poppins',
+                        color: Color(0xFF2cac69),
                       ),
                     ),
                   ),
@@ -212,53 +203,49 @@ class _SignupScreenState extends State<SignupScreen> {
       context: context,
       builder: (ctx) => Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 300),
+          constraints: const BoxConstraints(maxWidth: 320),
           child: Card(
-            elevation: 10,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
+            elevation: 8,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Image.asset(
                     'assets/images/ohno.png',
-                    height: MediaQuery.of(context).size.height * 0.2,
+                    height: 120,
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 24),
                   const Text(
                     'Terjadi Kesalahan',
                     style: TextStyle(
-                      fontSize: 20,
-                      color: Colors.black,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
                       fontFamily: 'Poppins',
+                      color: Colors.black87,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   Text(
                     message,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 16,
-                      color: Colors.black,
                       fontFamily: 'Poppins',
+                      color: Colors.black54,
                     ),
                   ),
                   const SizedBox(height: 20),
                   TextButton(
-                    onPressed: () {
-                      Navigator.of(ctx).pop();
-                    },
+                    onPressed: () => Navigator.of(ctx).pop(),
                     child: const Text(
                       'Done',
                       style: TextStyle(
-                        fontSize: 15,
-                        color: Color(0xFF2cac69),
-                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                         fontFamily: 'Poppins',
+                        color: Color(0xFF2cac69),
                       ),
                     ),
                   ),
@@ -276,53 +263,49 @@ class _SignupScreenState extends State<SignupScreen> {
       context: context,
       builder: (ctx) => Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 300),
+          constraints: const BoxConstraints(maxWidth: 320),
           child: Card(
-            elevation: 10,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
+            elevation: 8,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Image.asset(
                     'assets/images/already.png',
-                    height: MediaQuery.of(context).size.height * 0.2,
+                    height: 120,
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 24),
                   const Text(
                     'User Sudah Terdaftar',
                     style: TextStyle(
-                      fontSize: 20,
-                      color: Colors.black,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
                       fontFamily: 'Poppins',
+                      color: Colors.black87,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   const Text(
                     'User ini sudah terdaftar sebelumnya.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.black,
                       fontFamily: 'Poppins',
+                      color: Colors.black54,
                     ),
                   ),
                   const SizedBox(height: 20),
                   TextButton(
-                    onPressed: () {
-                      Navigator.of(ctx).pop();
-                    },
+                    onPressed: () => Navigator.of(ctx).pop(),
                     child: const Text(
                       'OK',
                       style: TextStyle(
-                        fontSize: 15,
-                        color: Color(0xFF2cac69),
-                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                         fontFamily: 'Poppins',
+                        color: Color(0xFF2cac69),
                       ),
                     ),
                   ),
@@ -352,8 +335,8 @@ class _SignupScreenState extends State<SignupScreen> {
                       children: [
                         Image.asset(
                           'assets/images/logo.png',
-                          width: 250,
-                          height: 250,
+                          width: 220,
+                          height: 220,
                         ),
                         const SizedBox(height: 16),
                       ],
@@ -363,10 +346,8 @@ class _SignupScreenState extends State<SignupScreen> {
                     top: 16,
                     left: 16,
                     child: IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white),
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
+                      icon: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
+                      onPressed: () => Navigator.pop(context),
                     ),
                   ),
                 ],
@@ -378,138 +359,149 @@ class _SignupScreenState extends State<SignupScreen> {
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(60),
-                    topRight: Radius.circular(60),
+                    topLeft: Radius.circular(40),
+                    topRight: Radius.circular(40),
                   ),
                 ),
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Column(
-                      children: [
-                        Text(
-                          'Hey there,',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 24,
-                            color: Colors.black,
-                            fontWeight: FontWeight.w500,
-                            fontFamily: 'Poppins',
-                          ),
-                        ),
-                        Text(
-                          'Create an Account',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 24,
-                            color: Color(0xFF2cac69),
-                            fontWeight: FontWeight.w900,
-                            fontFamily: 'Poppins',
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 50),
-                    TextField(
-                      controller: _emailController,
-                      decoration: InputDecoration(
-                        hintText: 'Email',
-                        prefixIcon: const Icon(Icons.email_outlined,
-                            color: Color(0xFF2cac69)),
-                        hintStyle: const TextStyle(fontFamily: 'Poppins'),
-                        filled: true,
-                        fillColor: Colors.grey[200],
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    TextField(
-                      controller: _usernameController,
-                      decoration: InputDecoration(
-                        hintText: 'Username',
-                        prefixIcon: const Icon(Icons.person_outline,
-                            color: Color(0xFF2cac69)),
-                        hintStyle: const TextStyle(fontFamily: 'Poppins'),
-                        filled: true,
-                        fillColor: Colors.grey[200],
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    TextField(
-                      controller: _passwordController,
-                      obscureText: !_isPasswordVisible,
-                      decoration: InputDecoration(
-                        hintText: 'Password',
-                        prefixIcon: const Icon(Icons.lock_outline,
-                            color: Color(0xFF2cac69)),
-                        hintStyle: const TextStyle(fontFamily: 'Poppins'),
-                        filled: true,
-                        fillColor: Colors.grey[200],
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding:
-                            const EdgeInsets.symmetric(vertical: 16),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _isPasswordVisible
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            color: Colors.grey,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _isPasswordVisible = !_isPasswordVisible;
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 25),
-                    Center(
-                      child: SizedBox(
-                        width: 190,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _signup,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2cac69),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Column(
+                        children: [
+                          Text(
+                            'Hey there,',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Poppins',
+                              color: Colors.black87,
                             ),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
                           ),
-                          child: _isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 3,
+                          Text(
+                            'Create an Account',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Poppins',
+                              color: Color(0xFF2cac69),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 48),
+                      TextField(
+                        controller: _emailController,
+                        decoration: InputDecoration(
+                          hintText: 'Email',
+                          prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF2cac69)),
+                          hintStyle: const TextStyle(
+                            fontFamily: 'Poppins',
+                            color: Colors.black45,
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[100],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+                        ),
+                        style: const TextStyle(fontFamily: 'Poppins'),
+                      ),
+                      const SizedBox(height: 24),
+                      TextField(
+                        controller: _usernameController,
+                        decoration: InputDecoration(
+                          hintText: 'Username',
+                          prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF2cac69)),
+                          hintStyle: const TextStyle(
+                            fontFamily: 'Poppins',
+                            color: Colors.black45,
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[100],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+                        ),
+                        style: const TextStyle(fontFamily: 'Poppins'),
+                      ),
+                      const SizedBox(height: 24),
+                      TextField(
+                        controller: _passwordController,
+                        obscureText: !_isPasswordVisible,
+                        decoration: InputDecoration(
+                          hintText: 'Password',
+                          prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF2cac69)),
+                          hintStyle: const TextStyle(
+                            fontFamily: 'Poppins',
+                            color: Colors.black45,
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[100],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                              color: Colors.black45,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _isPasswordVisible = !_isPasswordVisible;
+                              });
+                            },
+                          ),
+                        ),
+                        style: const TextStyle(fontFamily: 'Poppins'),
+                      ),
+                      const SizedBox(height: 40),
+                      Center(
+                        child: SizedBox(
+                          width: 220,
+                          height: 56,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _signup,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF2cac69),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              elevation: 4,
+                              shadowColor: Colors.black26,
+                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 24,
+                                    width: 24,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 3,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Sign Up',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                      fontFamily: 'Poppins',
+                                      color: Colors.white,
+                                    ),
                                   ),
-                                )
-                              : const Text(
-                                  'Sign Up',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                    fontFamily: 'Poppins',
-                                  ),
-                                ),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

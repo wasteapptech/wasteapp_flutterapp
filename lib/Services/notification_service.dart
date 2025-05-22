@@ -19,7 +19,8 @@ class NotificationService {
   static const String _fcmTokenKey = 'registeredFcmToken';
 
   @pragma('vm:entry-point')
-  static Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  static Future<void> firebaseMessagingBackgroundHandler(
+      RemoteMessage message) async {
     WidgetsFlutterBinding.ensureInitialized();
     await Firebase.initializeApp();
     await NotificationService()._handleBackgroundMessage(message);
@@ -37,7 +38,8 @@ class NotificationService {
 
   Future<void> _requestNotificationPermissions() async {
     try {
-      NotificationSettings settings = await _firebaseMessaging.requestPermission(
+      NotificationSettings settings =
+          await _firebaseMessaging.requestPermission(
         alert: true,
         badge: true,
         sound: true,
@@ -94,7 +96,8 @@ class NotificationService {
   }
 
   Future<void> _handleInitialNotification() async {
-    RemoteMessage? initialMessage = await _firebaseMessaging.getInitialMessage();
+    RemoteMessage? initialMessage =
+        await _firebaseMessaging.getInitialMessage();
     if (initialMessage != null) {
       print('App opened from terminated state via notification');
       _handleNotification(initialMessage);
@@ -123,27 +126,29 @@ class NotificationService {
     try {
       String? token = await _firebaseMessaging.getToken();
       print('FCM Token: $token');
-
       if (token != null) {
         final prefs = await SharedPreferences.getInstance();
         final registeredToken = prefs.getString(_fcmTokenKey);
-
         if (registeredToken != token) {
-          print('Registering new token...');
-          final response = await http.post(
-            Uri.parse('$_apiBaseUrl/notification/register-token'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: json.encode({'token': token}),
-          ).timeout(const Duration(seconds: 10));
-
+          print(
+              'Registering new token to $_apiBaseUrl/notification/register-token');
+          final response = await http
+              .post(
+                Uri.parse('$_apiBaseUrl/notification/register-token'),
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json',
+                },
+                body: json.encode({'token': token}),
+              )
+              .timeout(const Duration(seconds: 10));
+          print('API Response: ${response.statusCode} - ${response.body}');
           if (response.statusCode == 200) {
             await prefs.setString(_fcmTokenKey, token);
             print('Token registered successfully');
           } else {
-            throw Exception('Failed: ${response.statusCode} - ${response.body}');
+            throw Exception(
+                'Failed: ${response.statusCode} - ${response.body}');
           }
         } else {
           print('Token already registered');
@@ -159,7 +164,8 @@ class NotificationService {
     String body, {
     String? payload,
   }) async {
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
       'wasteapp_channel',
       'WasteApp Updates',
       channelDescription: 'Channel for WasteApp notifications',

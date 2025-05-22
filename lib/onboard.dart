@@ -102,13 +102,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: ElevatedButton(
                       onPressed: () {
                         if (_currentPage == _onboardingData.length - 1) {
-                          // Navigate to the NotificationPermissionPage after onboarding
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => NotificationPermissionPage(
+                              builder: (context) =>NotificationScreen(
                                 onContinue: () {
-                                  // Navigate to WelcomeScreen after notification permission handling
                                   Navigator.pushReplacement(
                                     context,
                                     MaterialPageRoute(

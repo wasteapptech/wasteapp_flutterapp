@@ -27,6 +27,10 @@ dependencies:
   google_maps_flutter: ^2.3.0
   location: ^5.0.0
   flutter_polyline_points: ^2.0.0
+  camera: ^0.10.0
+  path_provider: ^2.0.0                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+  image: ^4.0.15
+  path: ^1.8.3
 
 
 dev_dependencies:
@@ -39,7 +43,6 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
-    - assets/svg/
   fonts:
     - family: Poppins
       fonts:

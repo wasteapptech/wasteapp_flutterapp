@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:wasteapptest/Presentasion_page/page/dashboard_section/tempatsampah.dart';
 import 'package:wasteapptest/Presentasion_page/page/nav_section/profile.dart';
-import 'package:wasteapptest/Services/waste_chat_page.dart';
+import 'package:wasteapptest/Services/wastesupport_service.dart';
 import 'package:wasteapptest/Presentasion_page/page/nav_section/news_page.dart';
 import 'package:wasteapptest/Presentasion_page/page/dashboard_section/survey.dart';
+import 'package:wasteapptest/Domain_page/machinelearning.dart';
 import 'package:wasteapptest/Presentasion_page/page/dashboard_section/admin.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -24,7 +25,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<dynamic> banners = [];
   bool isLoadingBanners = true;
   int _currentBannerIndex = 0;
- bool _isBalanceVisible = true;
+  bool _isBalanceVisible = true;
 
   @override
   void initState() {
@@ -83,7 +84,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         );
         break;
       case 2:
-        // Add navigation for Scan page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const CameraScreen()),
+        );
         break;
       case 3:
         // Add navigation for Statistics page
@@ -111,158 +115,241 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Header Section with Balance Card
-                _buildHeaderSection(),
-
-                // Quick Access Menu Grid
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 20.0, vertical: 24.0),
+  Future<bool> onWillPop() async {
+    return await showDialog(
+          context: context,
+          builder: (ctx) => Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 300),
+              child: Card(
+                elevation: 10,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Row(
+                      Image.asset(
+                        'assets/images/logout.png',
+                        height: MediaQuery.of(context).size.height * 0.2,
+                      ),
+                      const SizedBox(height: 40),
+                      const Text(
+                        'Keluar Aplikasi',
+                        style: TextStyle(
+                          fontSize: 20,
+                          color: Colors.black,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'Apakah anda yakin ingin keluar dari aplikasi?',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.black,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          Icon(
-                            Icons.bolt_outlined,
-                            color: Color(0xFF2cac69),
-                            size: 20,
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            'Akses Cepat',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF333333),
+                          TextButton(
+                            onPressed: () => Navigator.of(ctx).pop(false),
+                            child: const Text(
+                              'Batal',
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Colors.grey,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'Poppins',
+                              ),
                             ),
                           ),
-                        ],
-                      ),
-                      GridView.count(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        childAspectRatio: 1.3,
-                        children: [
-                          _buildMenuCard(
-                            'Tempat Sampah Terdekat',
-                            Icons.location_on_outlined,
-                            Colors.green,
-                            onTap: () => _tempatsampahterdekat(context),
-                          ),
-                          _buildMenuCard(
-                            'Transaksi Sampah',
-                            Icons.receipt_long_outlined,
-                            const Color(0xFFFF9533),
-                            onTap: () {},
-                          ),
-                          _buildMenuCard(
-                            'Layanan Pelanggan',
-                            Icons.headset_mic_outlined,
-                            const Color(0xFF9C5EF2),
-                            onTap: () => _openTawkChat(context),
-                          ),
-                          _buildMenuCard(
-                            'Dompet',
-                            Icons.account_balance_wallet_outlined,
-                            const Color(0xFF00B5A5),
-                            onTap: () {},
+                          TextButton(
+                            onPressed: () => Navigator.of(ctx).pop(true),
+                            child: const Text(
+                              'Keluar',
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Color(0xFF2cac69),
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
                           ),
                         ],
                       ),
                     ],
                   ),
                 ),
-
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Row(
-                        children: [
-                          Icon(
-                            Icons
-                                .event_outlined, // Using event icon for Waste Event
-                            color: Color(0xFF2cac69),
-                            size: 20,
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            'Waste Event',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF333333),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      _buildBannerCarousel(),
-                      const SizedBox(height: 8),
-                      _buildBannerIndicator(),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Row(
-                        children: [
-                          Icon(
-                            Icons.info_outline,
-                            color: Color(0xFF2cac69),
-                            size: 20,
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            'Informasi & Layanan',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF333333),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      _buildSurveyCard(context),
-                      const SizedBox(height: 16),
-                      _buildAdminCard(context),
-                      const SizedBox(height: 80),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
+        ) ??
+        false;
+  }
 
-          // Bottom Navigation Bar
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: _buildBottomNavigationBar(),
-          ),
-        ],
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: onWillPop,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF5F7FA),
+        body: Stack(
+          children: [
+            SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Header Section with Balance Card
+                  _buildHeaderSection(),
+
+                  // Quick Access Menu Grid
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20.0, vertical: 24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(
+                              Icons.bolt_outlined,
+                              color: Color(0xFF2cac69),
+                              size: 20,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Akses Cepat',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF333333),
+                              ),
+                            ),
+                          ],
+                        ),
+                        GridView.count(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                          childAspectRatio: 1.3,
+                          children: [
+                            _buildMenuCard(
+                              'Tempat Sampah Terdekat',
+                              Icons.location_on_outlined,
+                              Colors.green,
+                              onTap: () => _tempatsampahterdekat(context),
+                            ),
+                            _buildMenuCard(
+                              'Transaksi Sampah',
+                              Icons.receipt_long_outlined,
+                              const Color(0xFFFF9533),
+                              onTap: () {},
+                            ),
+                            _buildMenuCard(
+                              'Layanan Pelanggan',
+                              Icons.headset_mic_outlined,
+                              const Color(0xFF9C5EF2),
+                              onTap: () => _openTawkChat(context),
+                            ),
+                            _buildMenuCard(
+                              'Dompet',
+                              Icons.account_balance_wallet_outlined,
+                              const Color(0xFF00B5A5),
+                              onTap: () {},
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(
+                              Icons
+                                  .event_outlined, // Using event icon for Waste Event
+                              color: Color(0xFF2cac69),
+                              size: 20,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Waste Event',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF333333),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        _buildBannerCarousel(),
+                        const SizedBox(height: 8),
+                        _buildBannerIndicator(),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              color: Color(0xFF2cac69),
+                              size: 20,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Informasi & Layanan',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF333333),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        _buildSurveyCard(context),
+                        const SizedBox(height: 16),
+                        _buildAdminCard(context),
+                        const SizedBox(height: 80),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Bottom Navigation Bar
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: _buildBottomNavigationBar(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -383,8 +470,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 });
                               },
                               child: Icon(
-                                _isBalanceVisible 
-                                    ? Icons.visibility 
+                                _isBalanceVisible
+                                    ? Icons.visibility
                                     : Icons.visibility_off,
                                 color: const Color(0xFF2cac69),
                                 size: 20,

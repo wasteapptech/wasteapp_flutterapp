@@ -12,6 +12,23 @@ class AdminPage extends StatefulWidget {
   State<AdminPage> createState() => _AdminPageState();
 }
 
+class WastePrice {
+  final String name;
+  int price;
+
+  WastePrice({
+    required this.name,
+    required this.price,
+  });
+
+  factory WastePrice.fromJson(MapEntry<String, dynamic> entry) {
+    return WastePrice(
+      name: entry.key,
+      price: entry.value as int,
+    );
+  }
+}
+
 class _AdminPageState extends State<AdminPage> {
   bool _isLoggedIn = false;
   bool _isLoading = false;
@@ -29,6 +46,10 @@ class _AdminPageState extends State<AdminPage> {
   String? _currentKegiatanId;
   File? _selectedImage;
 
+  List<WastePrice> _wastePrices = [];
+  bool _isEditingPrice = false;
+  final Map<String, TextEditingController> _priceControllers = {};
+
   List<dynamic> _kegiatanList = [];
   final ImagePicker _picker = ImagePicker();
 
@@ -37,6 +58,9 @@ class _AdminPageState extends State<AdminPage> {
     super.initState();
     _tanggalController.text = DateFormat('yyyy-MM-dd').format(DateTime.now());
     _selectedDate = DateTime.now();
+    if (_isLoggedIn) {
+      _fetchPrices();
+    }
   }
 
   @override
@@ -46,6 +70,7 @@ class _AdminPageState extends State<AdminPage> {
     _judulController.dispose();
     _deskripsiController.dispose();
     _tanggalController.dispose();
+    _priceControllers.values.forEach((controller) => controller.dispose());
     super.dispose();
   }
 
@@ -106,7 +131,6 @@ class _AdminPageState extends State<AdminPage> {
       );
 
       if (response.statusCode == 200) {
-        json.decode(response.body);
         await _showSuccessDialog(
           title: 'Login Berhasil',
           message: 'Kamu berhasil login ke admin panel',
@@ -116,7 +140,8 @@ class _AdminPageState extends State<AdminPage> {
           _isLoggedIn = true;
           _isLoading = false;
         });
-        _fetchKegiatan();
+        await _fetchPrices();
+        await _fetchKegiatan();
       } else {
         setState(() {
           _isLoading = false;
@@ -128,6 +153,83 @@ class _AdminPageState extends State<AdminPage> {
         _isLoading = false;
       });
       _showErrorDialog('Terjadi kesalahan. Coba lagi nanti.');
+    }
+  }
+
+  Future<void> _fetchPrices() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await http.get(
+        Uri.parse('https://api-wasteapp.vercel.app/api/harga'),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        setState(() {
+          _wastePrices =
+              data.entries.map((entry) => WastePrice.fromJson(entry)).toList();
+
+          // Initialize controllers
+          _priceControllers.clear();
+          for (var price in _wastePrices) {
+            _priceControllers[price.name] = TextEditingController(
+              text: price.price.toString(),
+            );
+          }
+        });
+      } else {
+        _showErrorDialog('Gagal mengambil data harga: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching prices: $e');
+      _showErrorDialog('Terjadi kesalahan: ${e.toString()}');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _updatePrices() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final Map<String, dynamic> updatedPrices = {};
+      for (var price in _wastePrices) {
+        updatedPrices[price.name] =
+            int.parse(_priceControllers[price.name]!.text);
+      }
+
+      final response = await http.put(
+        Uri.parse('https://api-wasteapp.vercel.app/api/harga'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(updatedPrices),
+      );
+
+      if (response.statusCode == 200) {
+        await _showSuccessDialog(
+          title: 'Berhasil',
+          message: 'Harga berhasil diperbarui',
+        );
+        await _fetchPrices();
+        setState(() {
+          _isEditingPrice = false;
+        });
+      } else {
+        _showErrorDialog('Gagal memperbarui harga: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error updating prices: $e');
+      _showErrorDialog('Terjadi kesalahan: ${e.toString()}');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -326,8 +428,8 @@ class _AdminPageState extends State<AdminPage> {
                 Image.asset(
                   'assets/images/congrats.png',
                   height: MediaQuery.of(context).size.height * 0.2,
-              ),
-              const SizedBox(height: 40),
+                ),
+                const SizedBox(height: 40),
                 Text(
                   title,
                   style: const TextStyle(
@@ -354,7 +456,7 @@ class _AdminPageState extends State<AdminPage> {
                     buttonText,
                     style: const TextStyle(
                       fontSize: 15,
-                      color:  Color(0xFF2cac69),
+                      color: Color(0xFF2cac69),
                       fontWeight: FontWeight.w700,
                       fontFamily: 'Poppins',
                     ),
@@ -459,7 +561,7 @@ class _AdminPageState extends State<AdminPage> {
             const SizedBox(height: 32),
             const Text(
               'Admin Login',
-              style:  TextStyle(
+              style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.w800,
                 color: Color(0xFF2cac69),
@@ -487,14 +589,15 @@ class _AdminPageState extends State<AdminPage> {
             decoration: InputDecoration(
               labelText: 'Username',
               labelStyle: TextStyle(color: Colors.grey[600]),
-              prefixIcon: const Icon(Icons.person, color:  Color(0xFF2cac69)),
+              prefixIcon: const Icon(Icons.person, color: Color(0xFF2cac69)),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: Colors.grey[300]!),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color:  Color(0xFF2cac69), width: 2),
+                borderSide:
+                    const BorderSide(color: Color(0xFF2cac69), width: 2),
               ),
               filled: true,
               fillColor: Colors.grey[50],
@@ -507,7 +610,7 @@ class _AdminPageState extends State<AdminPage> {
             decoration: InputDecoration(
               labelText: 'Password',
               labelStyle: TextStyle(color: Colors.grey[600]),
-              prefixIcon: const Icon(Icons.lock, color:  Color(0xFF2cac69)),
+              prefixIcon: const Icon(Icons.lock, color: Color(0xFF2cac69)),
               suffixIcon: IconButton(
                 icon: Icon(
                   _showPassword ? Icons.visibility : Icons.visibility_off,
@@ -525,7 +628,8 @@ class _AdminPageState extends State<AdminPage> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const  BorderSide(color:  Color(0xFF2cac69), width: 2),
+                borderSide:
+                    const BorderSide(color: Color(0xFF2cac69), width: 2),
               ),
               filled: true,
               fillColor: Colors.grey[50],
@@ -581,8 +685,8 @@ class _AdminPageState extends State<AdminPage> {
   Widget _buildAdminHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      decoration: const  BoxDecoration(
-        color:  Color(0xFF2cac69),
+      decoration: const BoxDecoration(
+        color: Color(0xFF2cac69),
       ),
       child: SafeArea(
         child: Row(
@@ -729,7 +833,7 @@ class _AdminPageState extends State<AdminPage> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color:  Color(0xFF2cac69),
+                  color: Color(0xFF2cac69),
                 ),
               ),
               ElevatedButton.icon(
@@ -777,13 +881,35 @@ class _AdminPageState extends State<AdminPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Daftar Harga Sampah',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color:  Color(0xFF2cac69),
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Daftar Harga Sampah',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2cac69),
+                ),
+              ),
+              if (!_isEditingPrice)
+                ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _isEditingPrice = true;
+                    });
+                  },
+                  icon: const Icon(Icons.edit, size: 18),
+                  label: const Text('Edit Harga'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2cac69),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 16),
           Container(
@@ -802,32 +928,107 @@ class _AdminPageState extends State<AdminPage> {
             ),
             child: Column(
               children: [
-                _buildHargaItem('Plastik', 'Rp 3.000/kg'),
-                const Divider(height: 24),
-                _buildHargaItem('Kertas', 'Rp 2.500/kg'),
-                const Divider(height: 24),
-                _buildHargaItem('Kaleng', 'Rp 4.000/kg'),
-                const Divider(height: 24),
-                _buildHargaItem('Kaca', 'Rp 1.500/kg'),
-                const Divider(height: 24),
-                _buildHargaItem('Elektronik', 'Rp 5.000/kg'),
+                ..._wastePrices
+                    .map((price) => Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    price.name,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 3,
+                                  child: _isEditingPrice
+                                      ? TextField(
+                                          controller:
+                                              _priceControllers[price.name],
+                                          keyboardType: TextInputType.number,
+                                          decoration: InputDecoration(
+                                            prefixText: 'Rp ',
+                                            suffixText: '/kg',
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 8,
+                                            ),
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                          ),
+                                        )
+                                      : Text(
+                                          'Rp ${price.price}/kg',
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF2cac69),
+                                          ),
+                                          textAlign: TextAlign.end,
+                                        ),
+                                ),
+                              ],
+                            ),
+                            if (_wastePrices.last != price)
+                              const Divider(height: 24),
+                          ],
+                        ))
+                    .toList(),
+                if (_isEditingPrice) ...[
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            setState(() {
+                              _isEditingPrice = false;
+                              // Reset controllers to original values
+                              for (var price in _wastePrices) {
+                                _priceControllers[price.name]!.text =
+                                    price.price.toString();
+                              }
+                            });
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF2cac69),
+                            side: const BorderSide(color: Color(0xFF2cac69)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text('Batal'),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _updatePrices,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2cac69),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text('Simpan'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () {
-              // Navigate to edit harga page
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2cac69),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-            ),
-            child: const Text('Edit Daftar Harga'),
           ),
         ],
       ),
@@ -850,7 +1051,7 @@ class _AdminPageState extends State<AdminPage> {
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color:  Color(0xFF2cac69),
+            color: Color(0xFF2cac69),
           ),
         ),
       ],
@@ -885,7 +1086,7 @@ class _AdminPageState extends State<AdminPage> {
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color:  Color(0xFF2cac69),
+                  color: Color(0xFF2cac69),
                 ),
               ),
               IconButton(
@@ -908,14 +1109,15 @@ class _AdminPageState extends State<AdminPage> {
             decoration: InputDecoration(
               labelText: 'Judul Kegiatan',
               labelStyle: TextStyle(color: Colors.grey[600]),
-              prefixIcon: const Icon(Icons.event, color:  Color(0xFF2cac69)),
+              prefixIcon: const Icon(Icons.event, color: Color(0xFF2cac69)),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: Colors.grey[300]!),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color:  Color(0xFF2cac69), width: 2),
+                borderSide:
+                    const BorderSide(color: Color(0xFF2cac69), width: 2),
               ),
               filled: true,
               fillColor: Colors.grey[50],
@@ -928,14 +1130,16 @@ class _AdminPageState extends State<AdminPage> {
             decoration: InputDecoration(
               labelText: 'Tanggal',
               labelStyle: TextStyle(color: Colors.grey[600]),
-              prefixIcon: const Icon(Icons.calendar_today, color:  Color(0xFF2cac69)),
+              prefixIcon:
+                  const Icon(Icons.calendar_today, color: Color(0xFF2cac69)),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: Colors.grey[300]!),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color:  Color(0xFF2cac69), width: 2),
+                borderSide:
+                    const BorderSide(color: Color(0xFF2cac69), width: 2),
               ),
               filled: true,
               fillColor: Colors.grey[50],
@@ -949,14 +1153,16 @@ class _AdminPageState extends State<AdminPage> {
             decoration: InputDecoration(
               labelText: 'Deskripsi',
               labelStyle: TextStyle(color: Colors.grey[600]),
-              prefixIcon: const Icon(Icons.description, color:  Color(0xFF2cac69)),
+              prefixIcon:
+                  const Icon(Icons.description, color: Color(0xFF2cac69)),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: Colors.grey[300]!),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color:  Color(0xFF2cac69), width: 2),
+                borderSide:
+                    const BorderSide(color: Color(0xFF2cac69), width: 2),
               ),
               filled: true,
               fillColor: Colors.grey[50],
@@ -1057,7 +1263,7 @@ class _AdminPageState extends State<AdminPage> {
                   },
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF2cac69),
-                    side: const BorderSide(color:  Color(0xFF2cac69)),
+                    side: const BorderSide(color: Color(0xFF2cac69)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -1169,14 +1375,14 @@ class _AdminPageState extends State<AdminPage> {
                   ),
                   child: const Icon(
                     Icons.event,
-                    color:  Color(0xFF2cac69),
+                    color: Color(0xFF2cac69),
                   ),
                 ),
                 title: Text(
                   kegiatan['judul'] ?? 'No Title',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    color:  Color(0xFF2cac69),
+                    color: Color(0xFF2cac69),
                   ),
                 ),
                 subtitle: Column(

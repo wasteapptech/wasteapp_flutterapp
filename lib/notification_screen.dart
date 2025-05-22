@@ -1,40 +1,114 @@
 import 'package:flutter/material.dart';
-import 'package:wasteapptest/Services/notification_service.dart';
+import '../Services/notification_service.dart';
 
-class NotificationPermissionPage extends StatefulWidget {
-  final Function() onContinue;
-  
-  const NotificationPermissionPage({
-    super.key, 
-    required this.onContinue,
-  });
+class NotificationScreen extends StatefulWidget {
+  const NotificationScreen({super.key, required this.onContinue});
+
+  final VoidCallback onContinue;
 
   @override
-  State<NotificationPermissionPage> createState() => _NotificationPermissionPageState();
+  State<NotificationScreen> createState() => _NotificationScreenState();
 }
 
-class _NotificationPermissionPageState extends State<NotificationPermissionPage> {
+class _NotificationScreenState extends State<NotificationScreen> {
   final NotificationService _notificationService = NotificationService();
-  bool _isInitialized = false;
+  bool _isLoading = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _initializeNotifications();
+  Future<void> _showSuccessDialog({
+    String title = 'Berhasil',
+    String message = 'Notifikasi berhasil diaktifkan!',
+    String buttonText = 'Lanjutkan',
+    VoidCallback? onPressed,
+  }) async {
+    await showDialog(
+      context: context,
+      builder: (ctx) => Center(
+        child: Card(
+          elevation: 10,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset(
+                  'assets/images/congrats.png',
+                  height: MediaQuery.of(context).size.height * 0.2,
+                ),
+                const SizedBox(height: 40),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    color: Colors.black,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.black,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+                const SizedBox(height: 20),
+                TextButton(
+                  onPressed: onPressed ?? () => Navigator.of(ctx).pop(),
+                  child: Text(
+                    buttonText,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      color: Color(0xFF2cac69),
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
-  Future<void> _initializeNotifications() async {
-    // Only initialize the service but don't request permissions yet
-    if (!_isInitialized) {
-      try {
-        // Just set up the service without requesting permission
-        setState(() {
-          _isInitialized = true;
-        });
-        print('Notification service prepared in NotificationPermissionPage');
-      } catch (e) {
-        print('Error preparing notification service in NotificationPermissionPage: $e');
-      }
+  Future<void> _enableNotifications() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await _notificationService.initialize();
+      print('Notifications initialized successfully');
+
+      // Show success dialog
+      await _showSuccessDialog(
+        title: 'Notifikasi Diaktifkan',
+        message:
+            'Notifikasi berhasil diaktifkan! Anda akan menerima informasi terbaru.',
+        buttonText: 'Lanjutkan',
+        onPressed: () {
+          Navigator.of(context).pop(); // Close dialog
+          widget.onContinue(); // Call the onContinue callback
+        },
+      );
+    } catch (e) {
+      print('Error initializing notifications: $e');
+      await _showSuccessDialog(
+        title: 'Gagal',
+        message: 'Gagal mengaktifkan notifikasi: $e',
+        buttonText: 'Coba Lagi',
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -54,7 +128,7 @@ class _NotificationPermissionPageState extends State<NotificationPermissionPage>
                 height: MediaQuery.of(context).size.height * 0.3,
               ),
               const SizedBox(height: 40),
-              
+
               // Title
               const Text(
                 "Aktifkan Notifikasi",
@@ -65,9 +139,9 @@ class _NotificationPermissionPageState extends State<NotificationPermissionPage>
                   fontFamily: 'Poppins',
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Description
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 12.0),
@@ -82,62 +156,39 @@ class _NotificationPermissionPageState extends State<NotificationPermissionPage>
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 60),
-              
-              // Enable Notification Button
+
+              // Enable Notifications Button
               SizedBox(
                 width: double.infinity,
-                height: 56,
                 child: ElevatedButton(
-                  onPressed: () async {
-                    if (_isInitialized) {
-                      // Now initialize and request permission when the user taps the button
-                      try {
-                        // Initialize will trigger the permission request
-                        await _notificationService.initialize();
-                        print('Notifications initialized and permission requested');
-                        
-                        // Get and display the token for debugging
-                        String? token = await _notificationService.getFcmToken();
-                        print('Current FCM token: $token');
-                      } catch (e) {
-                        print('Error requesting notification permission: $e');
-                      }
-                    }
-                    widget.onContinue();
-                  },
+                  onPressed: _isLoading ? null : _enableNotifications,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2cac69),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  child: const Text(
-                    "Aktifkan Sekarang",
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontFamily: 'Poppins',
-                    ),
-                  ),
-                ),
-              ),
-              
-              const SizedBox(height: 16),
-              
-              // Skip Button
-              TextButton(
-                onPressed: widget.onContinue,
-                child: const Text(
-                  "Nanti Saja",
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Color(0xFF757575),
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Poppins',
-                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Nyalakan Notifikasi',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
                 ),
               ),
             ],

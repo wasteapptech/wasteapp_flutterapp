@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
@@ -144,12 +143,11 @@ class _NewsPageState extends State<NewsPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SvgPicture.asset(
-                  'assets/svg/error-svgrepo-com.svg',
-                  width: 50,
-                  height: 50,
+                Image.asset(
+                  'assets/images/ohno.png',
+                  height: MediaQuery.of(context).size.height * 0.2,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 40),
                 const Text(
                   'Terjadi Kesalahan',
                   style: TextStyle(
@@ -224,6 +222,57 @@ class _NewsPageState extends State<NewsPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Show empty state if both sections have no data and are not loading
+    if (!isLoadingNews &&
+        !isLoadingKegiatan &&
+        newsItems.isEmpty &&
+        kegiatanItems.isEmpty) {
+      return Scaffold(
+        backgroundColor: const Color(0xfffefefe),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF2cac69),
+          title: const Text(
+            'Berita & Komunitas',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          centerTitle: true,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(
+              bottom: Radius.circular(20),
+            ),
+          ),
+          automaticallyImplyLeading: false,
+        ),
+        body: Stack(
+          children: [
+            RefreshIndicator(
+              onRefresh: () async {
+                await Future.wait([fetchNews(), fetchKegiatan()]);
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height,
+                  child: _buildEmptyState(),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: _buildBottomNavigationBar(),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Show full content if there is data or loading
     return Scaffold(
       backgroundColor: const Color(0xfffefefe),
       appBar: AppBar(
@@ -272,8 +321,6 @@ class _NewsPageState extends State<NewsPage> {
                         children: List.generate(
                             5, (_) => _buildNewsCardSkeleton(context)),
                       )
-                    else if (newsItems.isEmpty)
-                      _buildEmptyState(title: 'Tidak ada berita tersedia')
                     else
                       Column(
                         children: [
@@ -301,8 +348,6 @@ class _NewsPageState extends State<NewsPage> {
                         children: List.generate(
                             3, (_) => _buildKegiatanCardSkeleton(context)),
                       )
-                    else if (kegiatanItems.isEmpty)
-                      _buildEmptyState(title: 'Tidak ada kegiatan tersedia')
                     else
                       Column(
                         children: [
@@ -503,176 +548,176 @@ class _NewsPageState extends State<NewsPage> {
     );
   }
 
- Widget _buildKegiatanCard(Map<String, dynamic> kegiatan) {
-  final String? tanggalStr = kegiatan['tanggal'];
-  String formattedDate = 'Tanggal tidak tersedia';
+  Widget _buildKegiatanCard(Map<String, dynamic> kegiatan) {
+    final String? tanggalStr = kegiatan['tanggal'];
+    String formattedDate = 'Tanggal tidak tersedia';
 
-  if (tanggalStr != null && tanggalStr.isNotEmpty) {
-    DateTime? tanggal;
-    final parts1 = tanggalStr.split('-');
-    if (parts1.length == 3 && parts1[0].length == 2) {
-      tanggal = DateTime.tryParse('${parts1[2]}-${parts1[1]}-${parts1[0]}');
+    if (tanggalStr != null && tanggalStr.isNotEmpty) {
+      DateTime? tanggal;
+      final parts1 = tanggalStr.split('-');
+      if (parts1.length == 3 && parts1[0].length == 2) {
+        tanggal = DateTime.tryParse('${parts1[2]}-${parts1[1]}-${parts1[0]}');
+      }
+      tanggal ??= DateTime.tryParse(tanggalStr);
+      if (tanggal != null) {
+        formattedDate = DateFormat('dd MMM yyyy').format(tanggal);
+      }
     }
-    tanggal ??= DateTime.tryParse(tanggalStr);
-    if (tanggal != null) {
-      formattedDate = DateFormat('dd MMM yyyy').format(tanggal);
-    }
-  }
 
-  return Container(
-    margin: const EdgeInsets.only(bottom: 16),
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.05),
-          blurRadius: 10,
-          offset: const Offset(0, 4),
-        ),
-      ],
-    ),
-    child: Material(
-      borderRadius: BorderRadius.circular(16),
-      color: Colors.white,
-      child: InkWell(
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        onTap: () {
-          // Add navigation to kegiatan detail if needed
-        },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Image section
-            if (kegiatan['gambarUrl'] != null)
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16)),
-                child: Image.network(
-                  kegiatan['gambarUrl'],
-                  height: 180,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return SizedBox(
-                      height: 180,
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded /
-                                  loadingProgress.expectedTotalBytes!
-                              : null,
-                          color: const Color(0xFF2cac69),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            // Add navigation to kegiatan detail if needed
+          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Image section
+              if (kegiatan['gambarUrl'] != null)
+                ClipRRect(
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(16)),
+                  child: Image.network(
+                    kegiatan['gambarUrl'],
+                    height: 180,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return SizedBox(
+                        height: 180,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
+                            color: const Color(0xFF2cac69),
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 180,
+                        color: Colors.grey[100],
+                        child: const Center(
+                          child: Icon(
+                            Icons.image_not_supported,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              // Content section
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF2cac69), Color(0xFF30CF7A)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.event,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                kegiatan['judul'] ?? 'Kegiatan tanpa judul',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.calendar_today,
+                                    size: 14,
+                                    color: Colors.grey,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    formattedDate,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      kegiatan['deskripsi'] ?? 'Tidak ada deskripsi kegiatan',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          top: BorderSide(
+                            color: Colors.grey[200]!,
+                            width: 1,
+                          ),
                         ),
                       ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 180,
-                      color: Colors.grey[100],
-                      child: const Center(
-                        child: Icon(
-                          Icons.image_not_supported,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    );
-                  },
+                    ),
+                  ],
                 ),
               ),
-            // Content section
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF2cac69), Color(0xFF30CF7A)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.event,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              kegiatan['judul'] ?? 'Kegiatan tanpa judul',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.calendar_today,
-                                  size: 14,
-                                  color: Colors.grey,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  formattedDate,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    kegiatan['deskripsi'] ?? 'Tidak ada deskripsi kegiatan',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[800],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        top: BorderSide(
-                          color: Colors.grey[200]!,
-                          width: 1,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
-  Widget _buildEmptyState({required String title}) {
+  Widget _buildEmptyState() {
     return Center(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
@@ -681,33 +726,47 @@ class _NewsPageState extends State<NewsPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(
-              Icons.article_outlined,
-              size: 60,
-              color: Colors.grey[400],
+            Image.asset(
+              'assets/images/notfound.png',
+              height: 150,
+              width: 150,
             ),
             const SizedBox(height: 16),
-            Text(
-              title,
+            const Text(
+              'Mungkin ada kesalahan pada server',
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey,
+                fontFamily: 'Poppins',
               ),
             ),
-            const SizedBox(height: 8),
-            TextButton(
-              onPressed: () {
-                if (title.contains('berita')) {
-                  fetchNews();
-                } else {
-                  fetchKegiatan();
-                }
-              },
-              child: const Text(
-                'Coba Lagi',
-                style: TextStyle(
-                  color: Color(0xFF2cac69),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: 200,
+              child: ElevatedButton(
+                onPressed: () async {
+                  setState(() {
+                    isLoadingNews = true;
+                    isLoadingKegiatan = true;
+                  });
+                  await Future.wait([fetchNews(), fetchKegiatan()]);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2cac69),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: const Text(
+                  'Refresh',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Poppins',
+                  ),
                 ),
               ),
             ),
