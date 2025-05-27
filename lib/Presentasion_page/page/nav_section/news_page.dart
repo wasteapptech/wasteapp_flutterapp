@@ -233,7 +233,6 @@ class _NewsPageState extends State<NewsPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Show empty state if both sections have no data and are not loading
     if (!isLoadingNews && !isLoadingKegiatan && newsItems.isEmpty && kegiatanItems.isEmpty) {
       return WillPopScope(
         onWillPop: () async {
@@ -581,7 +580,7 @@ class _NewsPageState extends State<NewsPage> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 12),
-                    Row(
+                    Row(                                                  
                       children: [
                         const Spacer(),
                         Text(

@@ -9,15 +9,15 @@ class DetectionResult {
   final List<Detection> detections;
   final int imageHeight;
   final int imageWidth;
-  final double inferenceTime;  // Server-side inference time
-  final DateTime clientStartTime; // Client-side total time
+  final DateTime scanStartTime;
+  final int totalProcessingTime;
 
   DetectionResult({
     required this.detections,
     required this.imageHeight,
     required this.imageWidth,
-    required this.inferenceTime,
-    required this.clientStartTime,
+    required this.scanStartTime,
+    required this.totalProcessingTime,
   });
 
   factory DetectionResult.fromJson(Map<String, dynamic> json) {
@@ -27,10 +27,8 @@ class DetectionResult {
           .toList(),
       imageHeight: json['image_height'],
       imageWidth: json['image_width'],
-      inferenceTime: double.tryParse(json['inference_time']?.toString() ?? '0') ?? 0.0,
-      clientStartTime: json['client_start_time'] != null 
-          ? DateTime.parse(json['client_start_time'])
-          : DateTime.now(),
+      scanStartTime: DateTime.parse(json['scan_start_time']),
+      totalProcessingTime: json['total_processing_time'],
     );
   }
 }
@@ -259,8 +257,8 @@ class _ResultScreenState extends State<ResultScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        ...result.detections
-                            .map((detection) => _buildDetectionCard(detection, result)),
+                        ...result.detections.map((detection) =>
+                            _buildDetectionCard(detection, result)),
                       ],
                     ),
                   ),
@@ -319,7 +317,9 @@ class _ResultScreenState extends State<ResultScreen> {
                                   detectedItems: result.detections
                                       .map((detection) => {
                                             'className': detection.className,
-                                            'price': _prices?.getPriceForItem(detection.className) ?? 0,
+                                            'price': _prices?.getPriceForItem(
+                                                    detection.className) ??
+                                                0,
                                           })
                                       .toList(),
                                   totalAmount: totalPrice,
@@ -355,8 +355,7 @@ class _ResultScreenState extends State<ResultScreen> {
 
   Widget _buildDetectionCard(Detection detection, DetectionResult result) {
     final itemPrice = _prices?.getPriceForItem(detection.className) ?? 0;
-    final endTime = DateTime.now();
-    final totalProcessingTime = endTime.difference(result.clientStartTime).inMilliseconds;
+    final processingTimeStr = '${result.totalProcessingTime}ms';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -403,14 +402,7 @@ class _ResultScreenState extends State<ResultScreen> {
                   ),
                 ),
                 Text(
-                  'Server Processing: ${result.inferenceTime.toStringAsFixed(1)}ms',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
-                ),
-                Text(
-                  'Total Time: ${totalProcessingTime}ms',
+                  'Processing Time: $processingTimeStr',
                   style: TextStyle(
                     color: Colors.grey[600],
                     fontSize: 12,
@@ -529,3 +521,4 @@ class BoundingBoxPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+ 

@@ -178,8 +178,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _isLoadingBalance = false;
         });
       } else {
-        print('Error fetching balance: ${response.statusCode}');
-        print('Response body: ${response.body}');
+
         setState(() => _isLoadingBalance = false);
       }
     } catch (e) {
@@ -191,8 +190,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
     final userName = prefs.getString('userName') ?? 'Pengguna';
-
-    // Fetch avatar URL for the current user
     if (userName.isNotEmpty) {
       try {
         final response = await http.get(
@@ -298,7 +295,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         height: MediaQuery.of(context).size.height * 0.2,
                       ),
                       const SizedBox(height: 40),
-                      const Text(
+                      const Text(                           
                         'Keluar Aplikasi',
                         style: TextStyle(
                           fontSize: 20,
@@ -485,7 +482,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   fontSize: 14,
                                   color: Color(0xFF2cac69),
                                   fontWeight: FontWeight.w500,
-                                  decoration: TextDecoration.underline,
                                 ),
                               ),
                             ),

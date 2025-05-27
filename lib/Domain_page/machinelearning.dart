@@ -146,21 +146,24 @@ class _CameraScreenState extends State<CameraScreen>
       _isDetecting = true;
     });
 
+    final startTime = DateTime.now(); // Add this line to track start time
     _scanAnimationController.repeat();
 
     try {
       final XFile imageFile = await _controller!.takePicture();
-
-      // Convert and resize image to 640x640 if needed
       final File file = File(imageFile.path);
-
-      final result = await _sendImageForDetection(file);
+      final result = await _sendImageForDetection(file, startTime); // Pass startTime
 
       _scanAnimationController.stop();
 
       if (result != null &&
           result['detections'] != null &&
           result['detections'].isNotEmpty) {
+        // Calculate total processing time
+        final endTime = DateTime.now();
+        final processingTime = endTime.difference(startTime).inMilliseconds;
+        result['total_processing_time'] = processingTime; // Add processing time to result
+
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -184,11 +187,8 @@ class _CameraScreenState extends State<CameraScreen>
     }
   }
 
-  Future<Map<String, dynamic>?> _sendImageForDetection(File imageFile) async {
+  Future<Map<String, dynamic>?> _sendImageForDetection(File imageFile, DateTime startTime) async {
     try {
-      final startTime = DateTime.now();
-      
-      // Optimize image before sending
       final bytes = await imageFile.readAsBytes();
       final image = img.decodeImage(bytes);
       if (image == null) return null;
@@ -210,8 +210,7 @@ class _CameraScreenState extends State<CameraScreen>
 
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
-        // Add client-side start time
-        jsonResponse['client_start_time'] = startTime.toIso8601String();
+        jsonResponse['scan_start_time'] = startTime.toIso8601String();
         return jsonResponse;
       }
 
