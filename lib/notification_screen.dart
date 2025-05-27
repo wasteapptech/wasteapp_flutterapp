@@ -84,22 +84,30 @@ class _NotificationScreenState extends State<NotificationScreen> {
     });
 
     try {
+      // Step 1: Initialize notification service
       await _notificationService.initialize();
       print('Notifications initialized successfully');
 
-      // Show success dialog
-      await _showSuccessDialog(
-        title: 'Notifikasi Diaktifkan',
-        message:
-            'Notifikasi berhasil diaktifkan! Anda akan menerima informasi terbaru.',
-        buttonText: 'Lanjutkan',
-        onPressed: () {
-          Navigator.of(context).pop(); // Close dialog
-          widget.onContinue(); // Call the onContinue callback
-        },
-      );
+      // Step 2: Register FCM token to your backend
+      bool tokenRegistered = await _notificationService.registerDeviceToken();
+      
+      if (tokenRegistered) {
+        // Show success dialog
+        await _showSuccessDialog(
+          title: 'Notifikasi Diaktifkan',
+          message:
+              'Notifikasi berhasil diaktifkan! Anda akan menerima informasi terbaru.',
+          buttonText: 'Lanjutkan',
+          onPressed: () {
+            Navigator.of(context).pop(); // Close dialog
+            widget.onContinue(); // Call the onContinue callback
+          },
+        );
+      } else {
+        throw Exception('Gagal mendapatkan FCM token');
+      }
     } catch (e) {
-      print('Error initializing notifications: $e');
+      print('Error enabling notifications: $e');
       await _showSuccessDialog(
         title: 'Gagal',
         message: 'Gagal mengaktifkan notifikasi: $e',
@@ -146,7 +154,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 12.0),
                 child: Text(
-                  "Dapatkan informasi terbaru tentang lokasi tempat sampah, aktivitas lingkungan, dan events di sekitar Anda",
+                  "Dapatkan informasi terbaru tentang lokasi tempat sampah, aktivitas lingkungan, dan events di sekitar Anda.",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,

@@ -52,19 +52,16 @@ class _LoginPageState extends State<LoginPage> {
       final responseData = json.decode(response.body);
 
       if (response.statusCode == 200) {
-        // Status 200 adalah berhasil menurut API yang diberikan
         final prefs = await SharedPreferences.getInstance();
 
         await prefs.setBool('isLoggedIn', true);
         await prefs.setString('userName', name);
-
-        // Simpan email jika tersedia
         if (responseData['user'] != null &&
             responseData['user']['email'] != null) {
           await prefs.setString('userEmail', responseData['user']['email']);
         } else {
           await prefs.setString(
-              'userEmail', name); // Jika email tidak ada, gunakan nama
+              'userEmail', name); 
         }
 
         // Simpan data tambahan jika diperlukan
@@ -332,7 +329,7 @@ class _LoginPageState extends State<LoginPage> {
                     top: 16,
                     left: 16,
                     child: IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
                       onPressed: () {
                         Navigator.pop(context);
                       },

@@ -4,6 +4,7 @@ import 'package:location/location.dart';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:wasteapptest/Presentasion_page/page/dashboard_section/dashboard.dart';
 
 class TempatSampahPage extends StatefulWidget {
   const TempatSampahPage({super.key});
@@ -488,165 +489,174 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          // Google Map
-          GoogleMap(
-            initialCameraPosition: CameraPosition(
-              target: _initialCameraPosition,
-              zoom: 15,
-            ),
-            markers: _markers,
-            polylines: _polylines,
-            myLocationEnabled: true,
-            myLocationButtonEnabled: false, // We'll add our own button
-            zoomControlsEnabled: false,
-            mapToolbarEnabled: false,
-            compassEnabled: true,
-            onMapCreated: (GoogleMapController controller) {
-              setState(() {
-                _mapController = controller;
-                _isMapLoading = false;
-                _mapLoadingTimer?.cancel();
-              });
-              
-              print('Map controller initialized successfully');
-              _setupMarkers();
-              _getUserLocation();
-            },
-          ),
-          
-          // Loading overlay
-          if (_isMapLoading)
-            Container(
-              color: Colors.white,
-              child: const Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(color: Colors.green),
-                    SizedBox(height: 16),
-                    Text(
-                      'Memuat Peta...',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green,
-                      ),
-                    )
-                  ],
-                ),
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const DashboardScreen()),
+        );
+        return false;
+      },
+      child: Scaffold(
+        body: Stack(
+          children: [
+            // Google Map
+            GoogleMap(
+              initialCameraPosition: CameraPosition(
+                target: _initialCameraPosition,
+                zoom: 15,
               ),
-            ),
-          
-          // Location button
-          Positioned(
-            right: 16,
-            bottom: 120,
-            child: FloatingActionButton(
-              onPressed: _getUserLocation,
-              backgroundColor: Colors.white,
-              mini: true,
-              child: _isLocationLoading 
-                ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
-                    ),
-                  )
-                : const Icon(Icons.my_location, color: Colors.green),
-            ),
-          ),
-          
-          // Bottom sheet
-          NotificationListener<DraggableScrollableNotification>(
-            onNotification: (notification) {
-              return true;
-            },
-            child: DraggableScrollableSheet(
-              controller: _draggableController,
-              initialChildSize: 0.15,
-              minChildSize: 0.15,
-              maxChildSize: (() {
-                final count = _wasteBinLocations.length;
-                final estimated = 0.15 + (count * 0.10);
-                return estimated.clamp(0.15, 0.7); 
-              })(),
-              builder: (context, scrollController) {
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(24),
-                      topRight: Radius.circular(24),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 15,
-                        offset: const Offset(0, -5),
-                      ),
-                    ],
-                  ),
-                  child: SingleChildScrollView(
-                    controller: scrollController,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Center(
-                            child: Container(
-                              width: 40,
-                              height: 5,
-                              margin: const EdgeInsets.symmetric(vertical: 8),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[400],
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 10,
-                                horizontal: 16,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.green,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              width: double.infinity,
-                              child: const Text(
-                                'Tempat Sampah Terdekat',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          ..._wasteBinLocations.map((location) {
-                            return _buildLocationItem(
-                                location['name'], location['status']);
-                          }),
-                          const SizedBox(height: 15),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
+              markers: _markers,
+              polylines: _polylines,
+              myLocationEnabled: true,
+              myLocationButtonEnabled: false, // We'll add our own button
+              zoomControlsEnabled: false,
+              mapToolbarEnabled: false,
+              compassEnabled: true,
+              onMapCreated: (GoogleMapController controller) {
+                setState(() {
+                  _mapController = controller;
+                  _isMapLoading = false;
+                  _mapLoadingTimer?.cancel();
+                });
+                
+                print('Map controller initialized successfully');
+                _setupMarkers();
+                _getUserLocation();
               },
             ),
-          )
-        ],
+            
+            // Loading overlay
+            if (_isMapLoading)
+              Container(
+                color: Colors.white,
+                child: const Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(color: Colors.green),
+                      SizedBox(height: 16),
+                      Text(
+                        'Memuat Peta...',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            
+            // Location button
+            Positioned(
+              right: 16,
+              bottom: 120,
+              child: FloatingActionButton(
+                onPressed: _getUserLocation,
+                backgroundColor: Colors.white,
+                mini: true,
+                child: _isLocationLoading 
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+                      ),
+                    )
+                  : const Icon(Icons.my_location, color: Colors.green),
+              ),
+            ),
+            
+            // Bottom sheet
+            NotificationListener<DraggableScrollableNotification>(
+              onNotification: (notification) {
+                return true;
+              },
+              child: DraggableScrollableSheet(
+                controller: _draggableController,
+                initialChildSize: 0.15,
+                minChildSize: 0.15,
+                maxChildSize: (() {
+                  final count = _wasteBinLocations.length;
+                  final estimated = 0.15 + (count * 0.10);
+                  return estimated.clamp(0.15, 0.7); 
+                })(),
+                builder: (context, scrollController) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(24),
+                        topRight: Radius.circular(24),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 15,
+                          offset: const Offset(0, -5),
+                        ),
+                      ],
+                    ),
+                    child: SingleChildScrollView(
+                      controller: scrollController,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Center(
+                              child: Container(
+                                width: 40,
+                                height: 5,
+                                margin: const EdgeInsets.symmetric(vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[400],
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 10,
+                                  horizontal: 16,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.green,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                width: double.infinity,
+                                child: const Text(
+                                  'Tempat Sampah Terdekat',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            ..._wasteBinLocations.map((location) {
+                              return _buildLocationItem(
+                                  location['name'], location['status']);
+                            }),
+                            const SizedBox(height: 15),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            )
+          ],
+        ),
       ),
     );
   }

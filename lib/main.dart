@@ -3,7 +3,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:wasteapptest/Presentasion_page/page/dashboard_section/dashboard.dart';
 import 'package:wasteapptest/Services/notification_service.dart'; 
 import 'package:wasteapptest/splash_screen.dart';
 
@@ -11,7 +10,6 @@ List<CameraDescription> cameras = [];
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final bool isLoggedIn = await getLoginStatus();
 
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(
@@ -24,7 +22,7 @@ void main() async {
     print('Error initializing cameras: $e');
   }
   
-  runApp(MyApp(isLoggedIn: isLoggedIn));
+  runApp(MyApp());
 }
 
 Future<bool> getLoginStatus() async {
@@ -32,19 +30,17 @@ Future<bool> getLoginStatus() async {
   return prefs.getBool('isLoggedIn') ?? false;
 }
 
-final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-
 class MyApp extends StatelessWidget {
-  final bool isLoggedIn;
+  final NotificationService _notificationService = NotificationService();
 
-  const MyApp({super.key, required this.isLoggedIn});
+  MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      navigatorKey: navigatorKey,
+      navigatorKey: _notificationService.navigatorKey, 
       title: 'WasteApp',
-      home: isLoggedIn ? const DashboardScreen() : const SplashScreen(),
+      home: const SplashScreen(), 
     );
   }
 }

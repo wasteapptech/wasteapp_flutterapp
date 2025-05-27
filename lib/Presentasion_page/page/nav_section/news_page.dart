@@ -4,7 +4,9 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:wasteapptest/Domain_page/machinelearning.dart';
 import 'package:wasteapptest/Presentasion_page/page/dashboard_section/dashboard.dart';
+import 'package:wasteapptest/Presentasion_page/page/nav_section/leaderboard_page.dart';
 import 'package:wasteapptest/Presentasion_page/page/nav_section/profile.dart';
 
 class NewsPage extends StatefulWidget {
@@ -203,13 +205,22 @@ class _NewsPageState extends State<NewsPage> {
         );
         break;
       case 1:
-        // Already on News page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const NewsPage()),
+        );
         break;
       case 2:
-        // Add navigation for Scan page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const CameraScreen()),
+        );
         break;
       case 3:
-        // Add navigation for Leaderboard page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const  LeaderboardPage()),
+        );
         break;
       case 4:
         Navigator.pushReplacement(
@@ -223,16 +234,77 @@ class _NewsPageState extends State<NewsPage> {
   @override
   Widget build(BuildContext context) {
     // Show empty state if both sections have no data and are not loading
-    if (!isLoadingNews &&
-        !isLoadingKegiatan &&
-        newsItems.isEmpty &&
-        kegiatanItems.isEmpty) {
-      return Scaffold(
+    if (!isLoadingNews && !isLoadingKegiatan && newsItems.isEmpty && kegiatanItems.isEmpty) {
+      return WillPopScope(
+        onWillPop: () async {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const DashboardScreen()),
+          );
+          return false;
+        },
+        child: Scaffold(
+          backgroundColor: const Color(0xfffefefe),
+          appBar: AppBar(
+            backgroundColor: const Color(0xFF2cac69),
+            title: const Text(
+              'Berita & Kegiatan',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            centerTitle: true,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(
+                bottom: Radius.circular(20),
+              ),
+            ),
+            automaticallyImplyLeading: false,
+          ),
+          body: Stack(
+            children: [
+              RefreshIndicator(
+                color: const Color(0xFF2cac69),
+                onRefresh: () async {
+                  await Future.wait([fetchNews(), fetchKegiatan()]);
+                },
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: SizedBox(
+                    height: MediaQuery.of(context).size.height,
+                    child: _buildEmptyState(),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: _buildBottomNavigationBar(),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Show full content if there is data or loading
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const DashboardScreen()),
+        );
+        return false;
+      },
+      child: Scaffold(
         backgroundColor: const Color(0xfffefefe),
         appBar: AppBar(
           backgroundColor: const Color(0xFF2cac69),
           title: const Text(
-            'Berita & Komunitas',
+            'Berita & Kegiatan',
             style: TextStyle(
               color: Colors.white,
               fontSize: 20,
@@ -250,14 +322,106 @@ class _NewsPageState extends State<NewsPage> {
         body: Stack(
           children: [
             RefreshIndicator(
+              color: const Color(0xFF2cac69),
               onRefresh: () async {
                 await Future.wait([fetchNews(), fetchKegiatan()]);
               },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                child: SizedBox(
-                  height: MediaQuery.of(context).size.height,
-                  child: _buildEmptyState(),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Berita Hari Ini Section with Icon
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2cac69).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.newspaper,
+                              color: Color(0xFF2cac69),
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Berita Hari Ini',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      if (isLoadingNews)
+                        Column(
+                          children: List.generate(
+                              5, (_) => _buildNewsCardSkeleton(context)),
+                        )
+                      else
+                        Column(
+                          children: [
+                            ...newsItems.map((article) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 16),
+                                  child: _buildNewsCard(article),
+                                ))
+                          ],
+                        ),
+
+                      const SizedBox(height: 24),
+
+                      // Kegiatan Hari Ini Section with Icon
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2cac69).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.event_note,
+                              color: Color(0xFF2cac69),
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Kegiatan Hari Ini',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      if (isLoadingKegiatan)
+                        Column(
+                          children: List.generate(
+                              3, (_) => _buildKegiatanCardSkeleton(context)),
+                        )
+                      else
+                        Column(
+                          children: [
+                            ...kegiatanItems.map((kegiatan) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 16),
+                                  child: _buildKegiatanCard(kegiatan),
+                                ))
+                          ],
+                        ),
+
+                      const SizedBox(height: 80),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -269,108 +433,6 @@ class _NewsPageState extends State<NewsPage> {
             ),
           ],
         ),
-      );
-    }
-
-    // Show full content if there is data or loading
-    return Scaffold(
-      backgroundColor: const Color(0xfffefefe),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF2cac69),
-        title: const Text(
-          'Berita & Komunitas',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        centerTitle: true,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(20),
-          ),
-        ),
-        automaticallyImplyLeading: false,
-      ),
-      body: Stack(
-        children: [
-          RefreshIndicator(
-            onRefresh: () async {
-              await Future.wait([fetchNews(), fetchKegiatan()]);
-            },
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Berita Hari Ini Section
-                    const Text(
-                      'Berita Hari Ini',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    if (isLoadingNews)
-                      Column(
-                        children: List.generate(
-                            5, (_) => _buildNewsCardSkeleton(context)),
-                      )
-                    else
-                      Column(
-                        children: [
-                          ...newsItems.map((article) => Padding(
-                                padding: const EdgeInsets.only(bottom: 16),
-                                child: _buildNewsCard(article),
-                              ))
-                        ],
-                      ),
-
-                    const SizedBox(height: 24),
-
-                    // Kegiatan Hari Ini Section
-                    const Text(
-                      'Kegiatan Hari Ini',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    if (isLoadingKegiatan)
-                      Column(
-                        children: List.generate(
-                            3, (_) => _buildKegiatanCardSkeleton(context)),
-                      )
-                    else
-                      Column(
-                        children: [
-                          ...kegiatanItems.map((kegiatan) => Padding(
-                                padding: const EdgeInsets.only(bottom: 16),
-                                child: _buildKegiatanCard(kegiatan),
-                              ))
-                        ],
-                      ),
-
-                    const SizedBox(height: 80),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: _buildBottomNavigationBar(),
-          ),
-        ],
       ),
     );
   }

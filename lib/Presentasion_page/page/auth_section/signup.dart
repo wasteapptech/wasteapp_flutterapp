@@ -346,7 +346,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     top: 16,
                     left: 16,
                     child: IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
+                      icon: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 28),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ),

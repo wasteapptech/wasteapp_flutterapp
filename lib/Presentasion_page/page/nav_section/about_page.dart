@@ -17,7 +17,7 @@ class AboutPage extends StatelessWidget {
               Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Color(0xFF2cac69)),
+                    icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF2cac69)),
                     onPressed: () {
                       Navigator.pop(context); 
                     },

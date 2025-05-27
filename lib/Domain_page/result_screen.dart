@@ -3,16 +3,21 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:wasteapptest/Presentasion_page/page/dashboard_section/transaction.dart';
 
 class DetectionResult {
   final List<Detection> detections;
   final int imageHeight;
   final int imageWidth;
+  final double inferenceTime;  // Server-side inference time
+  final DateTime clientStartTime; // Client-side total time
 
   DetectionResult({
     required this.detections,
     required this.imageHeight,
     required this.imageWidth,
+    required this.inferenceTime,
+    required this.clientStartTime,
   });
 
   factory DetectionResult.fromJson(Map<String, dynamic> json) {
@@ -22,6 +27,10 @@ class DetectionResult {
           .toList(),
       imageHeight: json['image_height'],
       imageWidth: json['image_width'],
+      inferenceTime: double.tryParse(json['inference_time']?.toString() ?? '0') ?? 0.0,
+      clientStartTime: json['client_start_time'] != null 
+          ? DateTime.parse(json['client_start_time'])
+          : DateTime.now(),
     );
   }
 }
@@ -85,6 +94,10 @@ class WastePrices {
   final Map<String, int> prices;
 
   WastePrices({required this.prices});
+
+  int operator [](String itemName) {
+    return prices[itemName.toLowerCase()] ?? 0;
+  }
 
   factory WastePrices.fromJson(Map<String, dynamic> json) {
     Map<String, int> priceMap = {};
@@ -164,7 +177,7 @@ class _ResultScreenState extends State<ResultScreen> {
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
         ),
         elevation: 0,
@@ -247,7 +260,7 @@ class _ResultScreenState extends State<ResultScreen> {
                         ),
                         const SizedBox(height: 12),
                         ...result.detections
-                            .map((detection) => _buildDetectionCard(detection)),
+                            .map((detection) => _buildDetectionCard(detection, result)),
                       ],
                     ),
                   ),
@@ -299,7 +312,20 @@ class _ResultScreenState extends State<ResultScreen> {
                         const SizedBox(height: 12),
                         ElevatedButton(
                           onPressed: () {
-                            // Action untuk tabung atau proses selanjutnya
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => TransactionPage(
+                                  detectedItems: result.detections
+                                      .map((detection) => {
+                                            'className': detection.className,
+                                            'price': _prices?.getPriceForItem(detection.className) ?? 0,
+                                          })
+                                      .toList(),
+                                  totalAmount: totalPrice,
+                                ),
+                              ),
+                            );
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green,
@@ -327,8 +353,10 @@ class _ResultScreenState extends State<ResultScreen> {
     );
   }
 
-  Widget _buildDetectionCard(Detection detection) {
+  Widget _buildDetectionCard(Detection detection, DetectionResult result) {
     final itemPrice = _prices?.getPriceForItem(detection.className) ?? 0;
+    final endTime = DateTime.now();
+    final totalProcessingTime = endTime.difference(result.clientStartTime).inMilliseconds;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -374,11 +402,25 @@ class _ResultScreenState extends State<ResultScreen> {
                     fontSize: 12,
                   ),
                 ),
+                Text(
+                  'Server Processing: ${result.inferenceTime.toStringAsFixed(1)}ms',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 12,
+                  ),
+                ),
+                Text(
+                  'Total Time: ${totalProcessingTime}ms',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 12,
+                  ),
+                ),
               ],
             ),
           ),
           Text(
-            '1 pcs • Rp.${itemPrice}',
+            '1 pcs • Rp.$itemPrice',
             style: TextStyle(
               color: Colors.green[700],
               fontWeight: FontWeight.w500,

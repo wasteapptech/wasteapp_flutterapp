@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:wasteapptest/Presentasion_page/page/dashboard_section/tempatsampah.dart';
+import 'package:wasteapptest/Presentasion_page/page/dashboard_section/transaction.dart';
+import 'package:wasteapptest/Presentasion_page/page/nav_section/leaderboard_page.dart';
 import 'package:wasteapptest/Presentasion_page/page/nav_section/profile.dart';
 import 'package:wasteapptest/Services/wastesupport_service.dart';
 import 'package:wasteapptest/Presentasion_page/page/nav_section/news_page.dart';
@@ -11,6 +13,96 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:intl/intl.dart';
+import 'dart:async';
+
+class WaveDotsLoadingIndicator extends StatefulWidget {
+  const WaveDotsLoadingIndicator({super.key});
+
+  @override
+  State<WaveDotsLoadingIndicator> createState() =>
+      _WaveDotsLoadingIndicatorState();
+}
+
+class _WaveDotsLoadingIndicatorState extends State<WaveDotsLoadingIndicator>
+    with TickerProviderStateMixin {
+  late List<AnimationController> _controllers;
+  late List<Animation<double>> _animations;
+  final int numberOfDots = 8;
+
+  @override
+  void initState() {
+    super.initState();
+    _controllers = List.generate(
+      numberOfDots,
+      (index) => AnimationController(
+        duration: const Duration(milliseconds: 600),
+        vsync: this,
+      ),
+    );
+
+    _animations = _controllers.map((controller) {
+      return Tween<double>(begin: 0, end: 4).animate(
+        CurvedAnimation(
+          parent: controller,
+          curve: Curves.easeInOut,
+        ),
+      );
+    }).toList();
+
+    for (var i = 0; i < numberOfDots; i++) {
+      Future.delayed(Duration(milliseconds: i * 100), () {
+        if (mounted) {
+          _controllers[i].repeat(reverse: true);
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    for (var controller in _controllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Text.rich(
+      TextSpan(
+        children: List.generate(
+          numberOfDots,
+          (index) => WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: AnimatedBuilder(
+              animation: _controllers[index],
+              builder: (context, child) {
+                return Text(
+                  '•',
+                  style: TextStyle(
+                    fontSize: 28 + _animations[index].value,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    height: 1,
+                    shadows: [
+                      Shadow(
+                        blurRadius: 10.0,
+                        color: Colors.black.withOpacity(0.05),
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+      textAlign: TextAlign.start,
+    );
+  }
+}
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -26,12 +118,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool isLoadingBanners = true;
   int _currentBannerIndex = 0;
   bool _isBalanceVisible = true;
+  int _userBalance = 0;
+  bool _isLoadingBalance = true;
+  String? _avatarUrl;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
     _fetchBanners();
+    _fetchUserBalance();
   }
 
   Future<void> _fetchBanners() async {
@@ -58,11 +154,63 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  Future<void> _fetchUserBalance() async {
+    setState(() => _isLoadingBalance = true);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userEmail = prefs.getString('userEmail') ?? '';
+
+      if (userEmail.isEmpty) {
+        setState(() => _isLoadingBalance = false);
+        return;
+      }
+
+      final response = await http.get(
+        Uri.parse(
+            'https://api-wasteapp.vercel.app/api/transaksi/user/$userEmail'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _userBalance = data['totalSemuaTransaksi'] ?? 0;
+          _isLoadingBalance = false;
+        });
+      } else {
+        print('Error fetching balance: ${response.statusCode}');
+        print('Response body: ${response.body}');
+        setState(() => _isLoadingBalance = false);
+      }
+    } catch (e) {
+      print('Error fetching balance: $e');
+      setState(() => _isLoadingBalance = false);
+    }
+  }
+
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      userName = prefs.getString('userName') ?? 'Pengguna';
-    });
+    final userName = prefs.getString('userName') ?? 'Pengguna';
+
+    // Fetch avatar URL for the current user
+    if (userName.isNotEmpty) {
+      try {
+        final response = await http.get(
+          Uri.parse(
+              'https://api-wasteapp.vercel.app/api/user/profile?name=$userName'),
+        );
+
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          setState(() {
+            _avatarUrl = data['avatarUrl'];
+            this.userName = userName;
+          });
+        }
+      } catch (e) {
+        print('Error fetching avatar: $e');
+      }
+    }
   }
 
   void _onItemTapped(int index, BuildContext context) {
@@ -90,7 +238,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         );
         break;
       case 3:
-        // Add navigation for Statistics page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LeaderboardPage()),
+        );
         break;
       case 4:
         Navigator.pushReplacement(
@@ -112,6 +263,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const TempatSampahPage()),
+    );
+  }
+
+  void _transaksiuser(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => const TransactionPage(
+                detectedItems: [],
+                totalAmount: 0,
+              )),
     );
   }
 
@@ -195,6 +357,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
         false;
   }
 
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return 'Selamat Pagi!';
+    } else if (hour < 15) {
+      return 'Selamat Siang!';
+    } else if (hour < 19) {
+      return 'Selamat Sore!';
+    } else {
+      return 'Selamat Malam!';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -207,10 +382,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Header Section with Balance Card
                   _buildHeaderSection(),
-
-                  // Quick Access Menu Grid
                   Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20.0, vertical: 24.0),
@@ -253,7 +425,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               'Transaksi Sampah',
                               Icons.receipt_long_outlined,
                               const Color(0xFFFF9533),
-                              onTap: () {},
+                              onTap: () => _transaksiuser(context),
                             ),
                             _buildMenuCard(
                               'Layanan Pelanggan',
@@ -278,21 +450,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Row(
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Icon(
-                              Icons
-                                  .event_outlined, // Using event icon for Waste Event
-                              color: Color(0xFF2cac69),
-                              size: 20,
+                            const Row(
+                              children:  [
+                                Icon(
+                                  Icons.event_outlined,
+                                  color: Color(0xFF2cac69),
+                                  size: 20,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Waste Event',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF333333),
+                                  ),
+                                ),
+                              ],
                             ),
-                            SizedBox(width: 8),
-                            Text(
-                              'Waste Event',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF333333),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => const NewsPage()),
+                                );
+                              },
+                              child: const Text(
+                                'Lihat Lainnya',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFF2cac69),
+                                  fontWeight: FontWeight.w500,
+                                  decoration: TextDecoration.underline,
+                                ),
                               ),
                             ),
                           ],
@@ -320,7 +514,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             SizedBox(width: 8),
                             Text(
-                              'Informasi & Layanan',
+                              'Lainnya',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -374,6 +568,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: SingleChildScrollView(
         child: Stack(
           children: [
+            // Decorative circles
             Positioned(
               right: -50,
               top: 20,
@@ -398,39 +593,78 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
+            // Main content
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 40),
-                  const Text(
-                    '👋 Selamat datang kembali,',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    userName,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  // User info and avatar row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _getGreeting(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            userName,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.5),
+                            width: 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: CircleAvatar(
+                          radius: 25,
+                          backgroundColor: Colors.white.withOpacity(0.2),
+                          backgroundImage: _avatarUrl != null
+                              ? NetworkImage(_avatarUrl!)
+                              : const AssetImage('assets/images/profile.png')
+                                  as ImageProvider,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 20),
                   Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 18),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Colors.white.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.2),
+                        width: 1,
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.06),
+                          color: Colors.black.withOpacity(0.1),
                           blurRadius: 15,
                           offset: const Offset(0, 10),
                         ),
@@ -444,12 +678,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFE8F7EF),
+                                color: Colors.white.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: const Icon(
                                 Icons.account_balance_wallet,
-                                color: Color(0xFF2cac69),
+                                color: Colors.white,
                                 size: 18,
                               ),
                             ),
@@ -458,7 +692,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               'Saldo Tersedia',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Color(0xFF757575),
+                                color: Colors.white,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -473,31 +707,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 _isBalanceVisible
                                     ? Icons.visibility
                                     : Icons.visibility_off,
-                                color: const Color(0xFF2cac69),
+                                color: Colors.white,
                                 size: 20,
                               ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 10),
-                        Text(
-                          _isBalanceVisible ? 'Rp 50.000,00' : '••••••••',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF2cac69),
-                            height: 1,
-                            shadows: _isBalanceVisible
-                                ? [
-                                    Shadow(
-                                      blurRadius: 10.0,
-                                      color: Colors.black.withOpacity(0.05),
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ]
-                                : null,
-                          ),
-                        ),
+                        _isLoadingBalance
+                            ? const SizedBox(
+                                height: 32,
+                                child: WaveDotsLoadingIndicator(),
+                              )
+                            : Text(
+                                _isBalanceVisible
+                                    ? NumberFormat.currency(
+                                        locale: 'id',
+                                        symbol: 'Rp ',
+                                        decimalDigits: 0,
+                                      ).format(_userBalance)
+                                    : '••••••••',
+                                style: const TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  height: 1,
+                                ),
+                              ),
                       ],
                     ),
                   ),

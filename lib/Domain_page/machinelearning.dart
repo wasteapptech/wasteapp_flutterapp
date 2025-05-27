@@ -16,7 +16,7 @@ class CameraScreen extends StatefulWidget {
 }
 
 class _CameraScreenState extends State<CameraScreen>
-    with TickerProviderStateMixin {
+    with WidgetsBindingObserver, TickerProviderStateMixin {
   CameraController? _controller;
   bool _isDetecting = false;
   bool _isTorchOn = false;
@@ -27,8 +27,62 @@ class _CameraScreenState extends State<CameraScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initializeAnimations();
     _initializeCamera();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (_controller == null || !_controller!.value.isInitialized) return;
+
+    if (state == AppLifecycleState.inactive) {
+      // App is inactive
+      _turnOffTorch();
+    } else if (state == AppLifecycleState.resumed) {
+      // App is resumed
+      if (_isTorchOn) {
+        _turnOnTorch();
+      }
+    } else if (state == AppLifecycleState.paused) {
+      // App is in background
+      _turnOffTorch();
+    }
+  }
+
+  Future<void> _turnOffTorch() async {
+    try {
+      if (_isTorchOn) {
+        await _controller?.setFlashMode(FlashMode.off);
+        setState(() => _isTorchOn = false);
+      }
+    } catch (e) {
+      print('Error turning off torch: $e');
+    }
+  }
+
+  Future<void> _turnOnTorch() async {
+    try {
+      await _controller?.setFlashMode(FlashMode.torch);
+      setState(() => _isTorchOn = true);
+    } catch (e) {
+      print('Error turning on torch: $e');
+    }
+  }
+
+  Future<void> _toggleTorch() async {
+    try {
+      if (_isTorchOn) {
+        await _turnOffTorch();
+      } else {
+        await _turnOnTorch();
+      }
+    } catch (e) {
+      _showModernDialog(
+        title: 'Flash Error',
+        message: 'Unable to toggle flash.',
+      );
+    }
   }
 
   void _initializeAnimations() {
@@ -132,6 +186,8 @@ class _CameraScreenState extends State<CameraScreen>
 
   Future<Map<String, dynamic>?> _sendImageForDetection(File imageFile) async {
     try {
+      final startTime = DateTime.now();
+      
       // Optimize image before sending
       final bytes = await imageFile.readAsBytes();
       final image = img.decodeImage(bytes);
@@ -154,6 +210,8 @@ class _CameraScreenState extends State<CameraScreen>
 
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
+        // Add client-side start time
+        jsonResponse['client_start_time'] = startTime.toIso8601String();
         return jsonResponse;
       }
 
@@ -256,99 +314,155 @@ class _CameraScreenState extends State<CameraScreen>
       );
     }
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          // Camera Preview with rounded corners
-          Positioned.fill(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(30),
-              child: AspectRatio(
-                aspectRatio: _controller?.value.aspectRatio ?? 1,
-                child: CameraPreview(_controller!),
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const DashboardScreen()),
+        );
+        return false;
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          children: [
+            // Camera Preview with rounded corners
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(30),
+                child: AspectRatio(
+                  aspectRatio: _controller?.value.aspectRatio ?? 1,
+                  child: CameraPreview(_controller!),
+                ),
               ),
             ),
-          ),
 
-          // Modern Top Bar
-          Positioned(
-            top: MediaQuery.of(context).padding.top,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withOpacity(0.7),
-                    Colors.transparent,
+            // Modern Top Bar
+            Positioned(
+              top: MediaQuery.of(context).padding.top,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.7),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                      onPressed: () async {
+                        await _turnOffTorch(); // Ensure torch is off
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const DashboardScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    const Text(
+                      'Scan Sampah',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        _isTorchOn ? Icons.flash_on : Icons.flash_off,
+                        color: Colors.white,
+                      ),
+                      onPressed: _toggleTorch,
+                    ),
                   ],
                 ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const DashboardScreen()),
-                      );
-                    },
-                  ),
-                  const Text(
-                    'Scan Sampah',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+            ),
+
+            // Modern Scan Area
+            Center(
+              child: AnimatedBuilder(
+                animation: _pulseAnimation,
+                builder: (context, child) {
+                  return Transform.scale(
+                    scale: _pulseAnimation.value,
+                    child: Container(
+                      width: 280,
+                      height: 280,
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: const Color(0xFF2cac69),
+                          width: 2,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF2cac69).withOpacity(0.3),
+                            blurRadius: 10,
+                            spreadRadius: 5,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      _isTorchOn ? Icons.flash_on : Icons.flash_off,
-                      color: Colors.white,
-                    ),
-                    onPressed: () async {
-                      try {
-                        await _controller?.setFlashMode(
-                          _isTorchOn ? FlashMode.off : FlashMode.torch,
-                        );
-                        setState(() => _isTorchOn = !_isTorchOn);
-                      } catch (e) {
-                        _showModernDialog(
-                          title: 'Flash Error',
-                          message: 'Unable to toggle flash.',
-                        );
-                      }
-                    },
-                  ),
-                ],
+                  );
+                },
               ),
             ),
-          ),
 
-          // Modern Scan Area
-          Center(
-            child: AnimatedBuilder(
-              animation: _pulseAnimation,
-              builder: (context, child) {
-                return Transform.scale(
-                  scale: _pulseAnimation.value,
-                  child: Container(
-                    width: 280,
-                    height: 280,
+            // Instruction Text
+            Positioned(
+              bottom: 200,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    _isDetecting
+                        ? 'Sedang mendeteksi...'
+                        : 'Arahkan kamera ke sampah dan tekan tombol scan',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+
+            // Modern Capture Button
+            Positioned(
+              bottom: 50,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: GestureDetector(
+                  onTap: _isDetecting ? null : _captureAndDetect,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: _isDetecting ? 70 : 80,
+                    height: _isDetecting ? 70 : 80,
                     decoration: BoxDecoration(
-                      border: Border.all(
-                        color: const Color(0xFF2cac69),
-                        width: 2,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
+                      shape: BoxShape.circle,
+                      color: _isDetecting
+                          ? Colors.grey.withOpacity(0.5)
+                          : const Color(0xFF2cac69),
                       boxShadow: [
                         BoxShadow(
                           color: const Color(0xFF2cac69).withOpacity(0.3),
@@ -357,87 +471,32 @@ class _CameraScreenState extends State<CameraScreen>
                         ),
                       ],
                     ),
-                  ),
-                );
-              },
-            ),
-          ),
-
-          // Instruction Text
-          Positioned(
-            bottom: 200,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  _isDetecting
-                      ? 'Sedang mendeteksi...'
-                      : 'Arahkan kamera ke sampah dan tekan tombol scan',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-          ),
-
-          // Modern Capture Button
-          Positioned(
-            bottom: 50,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: GestureDetector(
-                onTap: _isDetecting ? null : _captureAndDetect,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: _isDetecting ? 70 : 80,
-                  height: _isDetecting ? 70 : 80,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _isDetecting
-                        ? Colors.grey.withOpacity(0.5)
-                        : const Color(0xFF2cac69),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF2cac69).withOpacity(0.3),
-                        blurRadius: 10,
-                        spreadRadius: 5,
-                      ),
-                    ],
-                  ),
-                  child: _isDetecting
-                      ? const Center(
-                          child: CircularProgressIndicator(
+                    child: _isDetecting
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 3,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.camera_alt,
                             color: Colors.white,
-                            strokeWidth: 3,
+                            size: 32,
                           ),
-                        )
-                      : const Icon(
-                          Icons.camera_alt,
-                          color: Colors.white,
-                          size: 32,
-                        ),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _turnOffTorch(); // Ensure torch is off when disposing
     _controller?.dispose();
     _scanAnimationController.dispose();
     _pulseAnimationController.dispose();

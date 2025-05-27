@@ -4,10 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wasteapptest/Domain_page/machinelearning.dart';
 import 'package:wasteapptest/Presentasion_page/page/dashboard_section/dashboard.dart';
 import 'package:wasteapptest/Presentasion_page/page/auth_section/signin.dart';
 import 'package:wasteapptest/Presentasion_page/page/nav_section/about_page.dart';
+import 'package:wasteapptest/Presentasion_page/page/nav_section/leaderboard_page.dart';
 import 'package:wasteapptest/Presentasion_page/page/nav_section/news_page.dart';
+import 'package:wasteapptest/Services/notification_service.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -22,6 +25,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Map<String, dynamic> userData = {};
   File? _image;
   final ImagePicker _picker = ImagePicker();
+  String? _avatarUrl;
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -74,12 +78,9 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final userName = prefs.getString('userName') ?? '';
-      final userEmail = prefs.getString('userEmail') ?? '';
 
       if (userName.isEmpty) {
-        setState(() {
-          isLoading = false;
-        });
+        setState(() => isLoading = false);
         return;
       }
 
@@ -93,23 +94,14 @@ class _ProfilePageState extends State<ProfilePage> {
         setState(() {
           userData = data;
           _nameController.text = data['name'] ?? userName;
-          _emailController.text = data['email'] ?? userEmail;
-          isLoading = false;
-        });
-      } else {
-        setState(() {
-          userData = {'name': userName, 'email': userEmail};
-          _nameController.text = userName;
-          _emailController.text = userEmail;
+          _emailController.text = data['email'] ?? '';
+          _avatarUrl = data['avatarUrl']; // Store avatar URL
           isLoading = false;
         });
       }
     } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
-      _showErrorDialog(
-          'Network error. Please check your connection and try again.');
+      setState(() => isLoading = false);
+      _showErrorDialog('Network error: ${e.toString()}');
     }
   }
 
@@ -118,21 +110,35 @@ class _ProfilePageState extends State<ProfilePage> {
       final prefs = await SharedPreferences.getInstance();
       final currentName = prefs.getString('userName') ?? '';
 
-      final response = await http.put(
-        Uri.parse('https://api-wasteapp.vercel.app/api/user/profile'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'currentName': currentName,
-          'newName': _nameController.text,
-          'newEmail': _newEmailController.text.isNotEmpty
-              ? _newEmailController.text
-              : null,
-        }),
-      );
+      var uri = Uri.parse('https://api-wasteapp.vercel.app/api/user/profile');
+      var request = http.MultipartRequest('PUT', uri);
+
+      // Add text fields
+      request.fields['currentName'] = currentName;
+      request.fields['newName'] = _nameController.text;
+      if (_newEmailController.text.isNotEmpty) {
+        request.fields['newEmail'] = _newEmailController.text;
+      }
+
+      // Add image file if selected
+      if (_image != null) {
+        var stream = http.ByteStream(_image!.openRead());
+        var length = await _image!.length();
+        var multipartFile = http.MultipartFile(
+          'avatar',
+          stream,
+          length,
+          filename: 'avatar.jpg',
+        );
+        request.files.add(multipartFile);
+      }
+
+      var response = await request.send();
+      var responseData = await response.stream.bytesToString();
+      var jsonResponse = json.decode(responseData);
 
       if (response.statusCode == 200) {
-        final responseData = json.decode(response.body);
-        final updatedUser = responseData['user'];
+        final updatedUser = jsonResponse['user'];
 
         await prefs.setString('userName', updatedUser['name']);
         if (updatedUser['email'] != null) {
@@ -143,13 +149,13 @@ class _ProfilePageState extends State<ProfilePage> {
           userData = updatedUser;
           _nameController.text = updatedUser['name'];
           _emailController.text = updatedUser['email'];
+          _avatarUrl = updatedUser['avatarUrl'];
         });
 
         _newEmailController.clear();
         _showSuccessDialog(message: 'Profile updated successfully');
       } else {
-        final errorData = json.decode(response.body);
-        _showErrorDialog(errorData['error'] ?? 'Failed to update profile');
+        _showErrorDialog(jsonResponse['error'] ?? 'Failed to update profile');
       }
     } catch (e) {
       _showErrorDialog('Error: $e');
@@ -197,27 +203,85 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginPage()),
-    );
+    try {
+      final notificationService = NotificationService();
+      await notificationService.cleanupToken();
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+        );
+      }
+    } catch (e) {
+      print('Error during logout: $e');
+      // Continue with logout even if token cleanup fails
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+        );
+      }
+    }
   }
 
   Future<void> _pickImage() async {
-    final XFile? pickedFile =
-        await _picker.pickImage(source: ImageSource.gallery);
+    try {
+      final XFile? pickedFile =
+          await _picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        setState(() => isLoading = true);
 
-    if (pickedFile != null) {
-      final imageFile = File(pickedFile.path);
-      await _saveImageToPrefs(pickedFile.path);
+        // Prepare the update request with the new image
+        final imageFile = File(pickedFile.path);
+        final prefs = await SharedPreferences.getInstance();
+        final currentName = prefs.getString('userName') ?? '';
 
-      setState(() {
-        _image = imageFile;
-      });
+        var uri = Uri.parse('https://api-wasteapp.vercel.app/api/user/profile');
+        var request = http.MultipartRequest('PUT', uri);
 
-      _showSuccessDialog(message: 'Profile picture updated');
+        // Add current user data
+        request.fields['currentName'] = currentName;
+        request.fields['newName'] = _nameController.text;
+
+        // Add the image file
+        var stream = http.ByteStream(imageFile.openRead());
+        var length = await imageFile.length();
+        var multipartFile = http.MultipartFile(
+          'avatar',
+          stream,
+          length,
+          filename: 'avatar.jpg',
+        );
+        request.files.add(multipartFile);
+
+        // Send the request
+        var response = await request.send();
+        var responseData = await response.stream.bytesToString();
+        var jsonResponse = json.decode(responseData);
+
+        if (response.statusCode == 200) {
+          final updatedUser = jsonResponse['user'];
+          setState(() {
+            _avatarUrl = updatedUser['avatarUrl'];
+            userData = updatedUser;
+          });
+          _showSuccessDialog(message: 'Profile picture updated successfully');
+        } else {
+          _showErrorDialog(
+              jsonResponse['error'] ?? 'Failed to update profile picture');
+        }
+      }
+    } catch (e) {
+      _showErrorDialog('Error updating profile picture: $e');
+    } finally {
+      setState(() => isLoading = false);
     }
   }
 
@@ -534,13 +598,22 @@ class _ProfilePageState extends State<ProfilePage> {
         );
         break;
       case 2:
-        // Add navigation for Scan page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const CameraScreen()),
+        );
         break;
       case 3:
-        // Add navigation for Leaderboard page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LeaderboardPage()),
+        );
         break;
       case 4:
-        // Already on Profile page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const ProfilePage()),
+        );
         break;
     }
   }
@@ -583,244 +656,257 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFEFEFE),
-      body: Stack(
-        children: [
-          isLoading
-              ? const Center(
-                  child: CircularProgressIndicator(color: Color(0xFF2cac69)),
-                )
-              : SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 40),
-                        const Row(
-                          children: [
-                            SizedBox(width: 8),
-                            Text(
-                              'Profile',
-                              style: TextStyle(
-                                color: Color(0xFF2cac69),
-                                fontSize: 20,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        Center(
-                          child: Column(
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const DashboardScreen()),
+        );
+        return false;
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFFEFEFE),
+        body: Stack(
+          children: [
+            isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF2cac69)),
+                  )
+                : SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          const SizedBox(height: 40),
+                          const Row(
                             children: [
-                              GestureDetector(
-                                onTap: _showImagePopup,
-                                child: Stack(
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 50,
-                                      backgroundImage: _image != null
-                                          ? FileImage(_image!)
-                                          : const AssetImage(
-                                                  'assets/images/profile.png')
-                                              as ImageProvider,
-                                    ),
-                                    Positioned(
-                                      bottom: 0,
-                                      right: 0,
-                                      child: GestureDetector(
-                                        onTap: _pickImage,
-                                        child: Container(
-                                          height: 30,
-                                          width: 30,
-                                          decoration: const BoxDecoration(
-                                            color: Color(0xFF2cac69),
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: const Icon(
-                                            Icons.camera_alt,
-                                            color: Colors.white,
-                                            size: 18,
+                              SizedBox(width: 8),
+                              Text(
+                                'Profile',
+                                style: TextStyle(
+                                  color: Color(0xFF2cac69),
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          Center(
+                            child: Column(
+                              children: [
+                                GestureDetector(
+                                  onTap: _showImagePopup,
+                                  child: Stack(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 50,
+                                        backgroundImage: _avatarUrl != null
+                                            ? NetworkImage(_avatarUrl!)
+                                            : const AssetImage(
+                                                    'assets/images/profile.png')
+                                                as ImageProvider,
+                                        child: isLoading
+                                            ? const CircularProgressIndicator(
+                                                color: Colors.white)
+                                            : null,
+                                      ),
+                                      Positioned(
+                                        bottom: 0,
+                                        right: 0,
+                                        child: GestureDetector(
+                                          onTap: _pickImage,
+                                          child: Container(
+                                            height: 30,
+                                            width: 30,
+                                            decoration: const BoxDecoration(
+                                              color: Color(0xFF2cac69),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(
+                                              Icons.camera_alt,
+                                              color: Colors.white,
+                                              size: 18,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                userData['name'] ?? 'User Name',
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              ElevatedButton(
-                                onPressed: _showEditProfileDialog,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF2cac69),
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30),
+                                    ],
                                   ),
-                                  minimumSize: const Size(150, 46),
                                 ),
-                                child: const Text(
-                                  'Edit',
+                                const SizedBox(height: 16),
+                                Text(
+                                  userData['name'] ?? 'User Name',
+                                  style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                ElevatedButton(
+                                  onPressed: _showEditProfileDialog,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF2cac69),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                    minimumSize: const Size(150, 46),
+                                  ),
+                                  child: const Text(
+                                    'Edit',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 30),
+
+                          // Account Section
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Account',
                                   style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF2cac69),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 30),
-
-                        // Account Section
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.1),
-                                blurRadius: 10,
-                                offset: const Offset(0, 5),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Account',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF2cac69),
+                                const SizedBox(height: 16),
+                                ListTile(
+                                  leading: const Icon(Icons.person,
+                                      color: Color(0xFF2cac69)),
+                                  title: const Text('Personal Data'),
+                                  trailing: const Icon(Icons.chevron_right,
+                                      color: Colors.grey),
+                                  onTap: _showEditProfileDialog,
                                 ),
-                              ),
-                              const SizedBox(height: 16),
-                              ListTile(
-                                leading: const Icon(Icons.person,
-                                    color: Color(0xFF2cac69)),
-                                title: const Text('Personal Data'),
-                                trailing: const Icon(Icons.chevron_right,
-                                    color: Colors.grey),
-                                onTap: _showEditProfileDialog,
-                              ),
-                              const Divider(),
-                              ListTile(
-                                leading: const Icon(Icons.lock,
-                                    color: Color(0xFF2cac69)),
-                                title: const Text('Update Password'),
-                                trailing: const Icon(Icons.chevron_right,
-                                    color: Colors.grey),
-                                onTap: _showResetPasswordDialog,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Other Section
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.1),
-                                blurRadius: 10,
-                                offset: const Offset(0, 5),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Other',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF2cac69),
+                                const Divider(),
+                                ListTile(
+                                  leading: const Icon(Icons.lock,
+                                      color: Color(0xFF2cac69)),
+                                  title: const Text('Update Password'),
+                                  trailing: const Icon(Icons.chevron_right,
+                                      color: Colors.grey),
+                                  onTap: _showResetPasswordDialog,
                                 ),
-                              ),
-                              const SizedBox(height: 16),
-                              ListTile(
-                                leading: const Icon(Icons.info,
-                                    color: Color(0xFF2cac69)),
-                                title: const Text('About'),
-                                trailing: const Icon(Icons.chevron_right,
-                                    color: Colors.grey),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const AboutPage(),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 24),
 
-                        const SizedBox(height: 24),
-                        Center(
-                          child: Text(
-                            'Version App v1.5.5',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
+                          // Other Section
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Other',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF2cac69),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                ListTile(
+                                  leading: const Icon(Icons.info,
+                                      color: Color(0xFF2cac69)),
+                                  title: const Text('About'),
+                                  trailing: const Icon(Icons.chevron_right,
+                                      color: Colors.grey),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const AboutPage(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed:
-                              _showLogoutDialog, // Changed from _logout to _showLogoutDialog
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2cac69),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                            minimumSize: const Size(double.infinity, 50),
-                          ),
-                          child: const Text(
-                            'Logout',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+
+                          const SizedBox(height: 24),
+                          Center(
+                            child: Text(
+                              'Version App v1.5.5',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 80),
-                      ],
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed:
+                                _showLogoutDialog, // Changed from _logout to _showLogoutDialog
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF2cac69),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              minimumSize: const Size(double.infinity, 50),
+                            ),
+                            child: const Text(
+                              'Logout',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 80),
+                        ],
+                      ),
                     ),
                   ),
-                ),
 
-          // Bottom Navigation Bar
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: _buildBottomNavigationBar(),
-          ),
-        ],
+            // Bottom Navigation Bar
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: _buildBottomNavigationBar(),
+            ),
+          ],
+        ),
       ),
     );
   }

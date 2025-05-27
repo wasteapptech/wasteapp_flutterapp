@@ -45,7 +45,7 @@ android {
 
     buildTypes {
         release {
-            signingConfig signingConfigs.release
+            signingConfig signingConfigs.debug // Make sure this line is present
             shrinkResources false
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -65,6 +65,8 @@ dependencies {
     implementation 'com.google.firebase:firebase-messaging:23.4.0' 
     implementation 'androidx.work:work-runtime:2.8.1' 
     implementation 'androidx.multidex:multidex:2.0.1' // Multidex support   
+    implementation 'com.google.firebase:firebase-analytics'
+    implementation 'com.google.firebase:firebase-messaging'
 }
 
 // Apply the Google Services plugin (this line should be at the bottom)

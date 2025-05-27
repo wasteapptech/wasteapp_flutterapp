@@ -36,7 +36,6 @@ class _AdminPageState extends State<AdminPage> {
   bool _showPassword = false;
   int _selectedTabIndex = 0;
 
-  // Controllers
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _judulController = TextEditingController();
@@ -70,7 +69,9 @@ class _AdminPageState extends State<AdminPage> {
     _judulController.dispose();
     _deskripsiController.dispose();
     _tanggalController.dispose();
-    _priceControllers.values.forEach((controller) => controller.dispose());
+    for (var controller in _priceControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -953,7 +954,7 @@ class _AdminPageState extends State<AdminPage> {
                                           keyboardType: TextInputType.number,
                                           decoration: InputDecoration(
                                             prefixText: 'Rp ',
-                                            suffixText: '/kg',
+                                            suffixText: '/Pcs',
                                             contentPadding:
                                                 const EdgeInsets.symmetric(
                                               horizontal: 12,
@@ -966,7 +967,7 @@ class _AdminPageState extends State<AdminPage> {
                                           ),
                                         )
                                       : Text(
-                                          'Rp ${price.price}/kg',
+                                          'Rp ${price.price}/pcs',
                                           style: const TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
