@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
@@ -90,7 +89,6 @@ class _TransactionPageState extends State<TransactionPage> {
   bool _isLoading = false;
   String _username = '';
   String _email = '';
-  File? _profileImage;
   String? _avatarUrl;
 
   List<Transaction> _transactions = [];

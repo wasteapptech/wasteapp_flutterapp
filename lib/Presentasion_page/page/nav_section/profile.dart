@@ -65,10 +65,6 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  Future<void> _saveImageToPrefs(String path) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('userProfileImage', path);
-  }
 
   Future<void> _getUserData() async {
     setState(() {

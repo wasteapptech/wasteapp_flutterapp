@@ -1036,28 +1036,6 @@ class _AdminPageState extends State<AdminPage> {
     );
   }
 
-  Widget _buildHargaItem(String jenis, String harga) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          jenis,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        Text(
-          harga,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF2cac69),
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildKegiatanForm() {
     return Container(
