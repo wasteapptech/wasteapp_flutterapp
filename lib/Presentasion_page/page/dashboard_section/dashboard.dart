@@ -15,6 +15,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
+import 'package:wasteapptest/Presentasion_page/page/dashboard_section/wallet_page.dart';
 
 class WaveDotsLoadingIndicator extends StatefulWidget {
   const WaveDotsLoadingIndicator({super.key});
@@ -434,7 +435,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               'Dompet',
                               Icons.account_balance_wallet_outlined,
                               const Color(0xFF00B5A5),
-                              onTap: () {},
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const WalletPage()),
+                                );
+                              },
                             ),
                           ],
                         ),

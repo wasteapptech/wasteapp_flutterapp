@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:wasteapptest/Presentasion_page/page/dashboard_section/dashboard.dart';
+import 'package:wasteapptest/Domain_page/waste.dart';
 
 class TempatSampahPage extends StatefulWidget {
   const TempatSampahPage({super.key});
@@ -14,7 +15,7 @@ class TempatSampahPage extends StatefulWidget {
 }
 
 class _TempatSampahPageState extends State<TempatSampahPage> {
-  GoogleMapController? _mapController; // Change to nullable
+  GoogleMapController? _mapController; 
   final Location _location = Location();
   final Set<Marker> _markers = {};
   final Set<Polyline> _polylines = {};
@@ -26,27 +27,24 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
   final String _openRouteServiceApiKey =
       '5b3ce3597851110001cf62489813e9e1ff0748c1a2c5f2232f31c216';
   BitmapDescriptor? _customMarkerIcon;
-  bool _isMapLoading = true; // Track map loading state
-  bool _isLocationLoading = false; // Track location loading state
-  int _mapLoadRetryCount = 0; // Track retry attempts
-  final int _maxRetryAttempts = 3; // Maximum number of retry attempts
-  Timer? _mapLoadingTimer; // Timer for map loading timeout
+  bool _isMapLoading = true; 
+  bool _isLocationLoading = false; 
+  int _mapLoadRetryCount = 0;
+  final int _maxRetryAttempts = 3; 
+  Timer? _mapLoadingTimer; 
 
   final List<Map<String, dynamic>> _wasteBinLocations = [
     {
       'name': 'Open Library',
       'location': const LatLng(-6.9717188811077895, 107.63241546931336),
-      'status': 'Available',
     },
     {
       'name': 'Tult',
       'location': const LatLng(-6.969079651231849, 107.62815699654476),
-      'status': 'Available',
     },
     {
       'name': 'Gedung Rektorat',
       'location': const LatLng(-6.973997663997622, 107.63038396036787),
-      'status': 'Almost Full',
     },
   ];
 
@@ -459,30 +457,11 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
   }
 
   void _showStatus(String locationName) {
-    final selectedLocation = _wasteBinLocations.firstWhere(
-      (location) => location['name'] == locationName,
-      orElse: () => _wasteBinLocations[0],
-    );
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Status $locationName'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Status: ${selectedLocation['status']}'),
-            const SizedBox(height: 8),
-            const Text('Last updated: Today, 10:30 AM'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Tutup'),
-          ),
-        ],
+    // Replace existing dialog with navigation to WasteBinStatus
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const WasteBinStatus(),
       ),
     );
   }
@@ -663,85 +642,147 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
 
   Widget _buildLocationItem(String name, String status) {
     Color statusColor = Colors.green;
-    if (status == 'Almost Full') {
-      statusColor = Colors.orange;
-    } else if (status == 'Full') {
-      statusColor = Colors.red;
-    }
+    IconData statusIcon = Icons.check_circle_outline;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(16),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 10,
               offset: const Offset(0, 2),
             ),
           ],
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
+        child: Column(
           children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  // Location Icon Container
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: Colors.green,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  
+                  // Location Details
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Action Buttons
             Container(
-              width: 10,
-              height: 10,
-              margin: const EdgeInsets.only(right: 12),
               decoration: BoxDecoration(
-                color: statusColor,
-                shape: BoxShape.circle,
-              ),
-            ),
-            const Icon(
-              Icons.delete_outline_rounded,
-              size: 20,
-              color: Colors.green,
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                name,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+                color: Colors.grey[50],
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
                 ),
               ),
-            ),
-            ElevatedButton(
-              onPressed: () => _showRoute(name),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                minimumSize: const Size(60, 32),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                visualDensity: VisualDensity.compact,
+              child: Row(
+                children: [
+                  // Route Button
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => _showRoute(name),
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(20),
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.directions,
+                              size: 20,
+                              color: Colors.green,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Rute',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[800],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                  // Vertical Divider
+                  Container(
+                    height: 24,
+                    width: 1,
+                    color: Colors.grey[300],
+                  ),
+                  
+                  // Status Button
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => _showStatus(name),
+                      borderRadius: const BorderRadius.only(
+                        bottomRight: Radius.circular(20),
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.info_outline,
+                              size: 20,
+                              color: Colors.green,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Status',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[800],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              child: const Text('Rute'),
-            ),
-            const SizedBox(width: 8),
-            OutlinedButton(
-              onPressed: () => _showStatus(name),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.green,
-                side: const BorderSide(color: Colors.green),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                minimumSize: const Size(60, 32),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                visualDensity: VisualDensity.compact,
-              ),
-              child: const Text('Status'),
             ),
           ],
         ),
