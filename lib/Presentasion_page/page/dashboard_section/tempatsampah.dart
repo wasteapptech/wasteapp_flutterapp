@@ -15,7 +15,7 @@ class TempatSampahPage extends StatefulWidget {
 }
 
 class _TempatSampahPageState extends State<TempatSampahPage> {
-  GoogleMapController? _mapController; 
+  GoogleMapController? _mapController;
   final Location _location = Location();
   final Set<Marker> _markers = {};
   final Set<Polyline> _polylines = {};
@@ -27,24 +27,27 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
   final String _openRouteServiceApiKey =
       '5b3ce3597851110001cf62489813e9e1ff0748c1a2c5f2232f31c216';
   BitmapDescriptor? _customMarkerIcon;
-  bool _isMapLoading = true; 
-  bool _isLocationLoading = false; 
+  bool _isMapLoading = true;
+  bool _isLocationLoading = false;
   int _mapLoadRetryCount = 0;
-  final int _maxRetryAttempts = 3; 
-  Timer? _mapLoadingTimer; 
+  final int _maxRetryAttempts = 3;
+  Timer? _mapLoadingTimer;
 
   final List<Map<String, dynamic>> _wasteBinLocations = [
     {
       'name': 'Open Library',
       'location': const LatLng(-6.9717188811077895, 107.63241546931336),
+      'status': 'Available', // Add status field
     },
     {
       'name': 'Tult',
       'location': const LatLng(-6.969079651231849, 107.62815699654476),
+      'status': 'Available',
     },
     {
       'name': 'Gedung Rektorat',
       'location': const LatLng(-6.973997663997622, 107.63038396036787),
+      'status': 'Available',
     },
   ];
 
@@ -78,11 +81,12 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
       _mapLoadRetryCount++;
       showCustomPopup(
         context: context,
-        message: 'Mencoba memuat peta kembali... ($_mapLoadRetryCount/$_maxRetryAttempts)',
+        message:
+            'Mencoba memuat peta kembali... ($_mapLoadRetryCount/$_maxRetryAttempts)',
         backgroundColor: Colors.orange,
         icon: Icons.refresh,
       );
-      
+
       // Force rebuild after short delay
       Future.delayed(const Duration(seconds: 1), () {
         if (mounted) {
@@ -126,7 +130,7 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
 
   void _setupMarkers() {
     if (_customMarkerIcon == null) return;
-    
+
     final Set<Marker> newMarkers = {};
 
     for (final location in _wasteBinLocations) {
@@ -160,11 +164,11 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
 
   Future<void> _getUserLocation() async {
     if (_isLocationLoading) return;
-    
+
     setState(() {
       _isLocationLoading = true;
     });
-    
+
     try {
       bool serviceEnabled = await _location.serviceEnabled();
       if (!serviceEnabled) {
@@ -202,19 +206,20 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
 
       final locationData = await _location.getLocation();
       if (!mounted) return;
-      
+
       setState(() {
-        _currentUserLocation = LatLng(locationData.latitude!, locationData.longitude!);
+        _currentUserLocation =
+            LatLng(locationData.latitude!, locationData.longitude!);
         _isLocationLoading = false;
       });
 
       _setupMarkers();
-      
+
       if (_mapController != null) {
         _mapController!.animateCamera(
           CameraUpdate.newLatLngZoom(_currentUserLocation!, 15),
         );
-        
+
         showCustomPopup(
           context: context,
           message: 'Lokasi Anda ditemukan',
@@ -246,10 +251,10 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
         backgroundColor: Colors.orange,
         icon: Icons.warning_amber_rounded,
       );
-      
+
       // Try to get user location first
       await _getUserLocation();
-      
+
       // Check again
       if (_currentUserLocation == null) return;
     }
@@ -258,14 +263,14 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
       setState(() {
         _polylines.clear();
       });
-      
+
       showCustomPopup(
         context: context,
         message: 'Mencari rute terbaik...',
         backgroundColor: Colors.blue,
         icon: Icons.directions,
       );
-      
+
       final directions = await _getRouteCoordinates(
         _currentUserLocation!,
         destination,
@@ -279,7 +284,8 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
         final coordinates =
             directions['features'][0]['geometry']['coordinates'];
         final List<LatLng> points = coordinates
-            .map<LatLng>((coord) => LatLng(coord[1].toDouble(), coord[0].toDouble()))
+            .map<LatLng>(
+                (coord) => LatLng(coord[1].toDouble(), coord[0].toDouble()))
             .toList();
 
         setState(() {
@@ -292,14 +298,14 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
             ),
           );
         });
-        
+
         if (_mapController != null && points.isNotEmpty) {
           LatLngBounds bounds = boundsFromLatLngList(points);
           _mapController!.animateCamera(
             CameraUpdate.newLatLngBounds(bounds, 50),
           );
         }
-        
+
         showCustomPopup(
           context: context,
           message: 'Rute ditemukan',
@@ -333,7 +339,7 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
   }) {
     // Make sure we're in a valid context
     if (!mounted) return;
-    
+
     final overlay = Overlay.of(context);
     final entry = OverlayEntry(
       builder: (context) => Positioned(
@@ -405,7 +411,8 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
       if (response.statusCode == 200) {
         return json.decode(response.body);
       } else {
-        print('Error from OpenRouteService API: ${response.statusCode} ${response.body}');
+        print(
+            'Error from OpenRouteService API: ${response.statusCode} ${response.body}');
         return null;
       }
     } catch (e) {
@@ -417,7 +424,7 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
   LatLngBounds boundsFromLatLngList(List<LatLng> list) {
     assert(list.isNotEmpty);
     double? x0, x1, y0, y1;
-    
+
     for (LatLng latLng in list) {
       if (x0 == null) {
         x0 = x1 = latLng.latitude;
@@ -429,15 +436,14 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
         if (latLng.longitude < y0!) y0 = latLng.longitude;
       }
     }
-    
+
     // Add padding
     final latPadding = (x1! - x0!) * 0.1;
     final lngPadding = (y1! - y0!) * 0.1;
-    
+
     return LatLngBounds(
-      northeast: LatLng(x1 + latPadding, y1 + lngPadding), 
-      southwest: LatLng(x0 - latPadding, y0 - lngPadding)
-    );
+        northeast: LatLng(x1 + latPadding, y1 + lngPadding),
+        southwest: LatLng(x0 - latPadding, y0 - lngPadding));
   }
 
   void _showRoute(String locationName) {
@@ -498,13 +504,13 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
                   _isMapLoading = false;
                   _mapLoadingTimer?.cancel();
                 });
-                
+
                 print('Map controller initialized successfully');
                 _setupMarkers();
                 _getUserLocation();
               },
             ),
-            
+
             // Loading overlay
             if (_isMapLoading)
               Container(
@@ -527,7 +533,7 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
                   ),
                 ),
               ),
-            
+
             // Location button
             Positioned(
               right: 16,
@@ -536,19 +542,20 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
                 onPressed: _getUserLocation,
                 backgroundColor: Colors.white,
                 mini: true,
-                child: _isLocationLoading 
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
-                      ),
-                    )
-                  : const Icon(Icons.my_location, color: Colors.green),
+                child: _isLocationLoading
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.green),
+                        ),
+                      )
+                    : const Icon(Icons.my_location, color: Colors.green),
               ),
             ),
-            
+
             // Bottom sheet
             NotificationListener<DraggableScrollableNotification>(
               onNotification: (notification) {
@@ -561,7 +568,7 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
                 maxChildSize: (() {
                   final count = _wasteBinLocations.length;
                   final estimated = 0.15 + (count * 0.10);
-                  return estimated.clamp(0.15, 0.7); 
+                  return estimated.clamp(0.15, 0.7);
                 })(),
                 builder: (context, scrollController) {
                   return Container(
@@ -598,7 +605,8 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
                               ),
                             ),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 20),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 10,
@@ -640,10 +648,7 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
     );
   }
 
-  Widget _buildLocationItem(String name, String status) {
-    Color statusColor = Colors.green;
-    IconData statusIcon = Icons.check_circle_outline;
-
+  Widget _buildLocationItem(String name, String? status) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Container(
@@ -665,7 +670,6 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  // Location Icon Container
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -679,7 +683,7 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  
+
                   // Location Details
                   Expanded(
                     child: Column(
@@ -692,14 +696,23 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        if (status != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            status,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-            
+
             // Action Buttons
             Container(
               decoration: BoxDecoration(
@@ -742,14 +755,14 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
                       ),
                     ),
                   ),
-                  
+
                   // Vertical Divider
                   Container(
                     height: 24,
                     width: 1,
                     color: Colors.grey[300],
                   ),
-                  
+
                   // Status Button
                   Expanded(
                     child: InkWell(

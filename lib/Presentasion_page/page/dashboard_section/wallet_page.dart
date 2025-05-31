@@ -27,13 +27,14 @@ class _WalletPageState extends State<WalletPage> {
   }
 
   void _generateCardNumber() {
+    // Ensure card number is never null
     String number = '';
     for (int i = 0; i < 16; i++) {
       if (i > 0 && i % 4 == 0) number += ' ';
       number += _random.nextInt(10).toString();
     }
     setState(() {
-      _cardNumber = number;
+      _cardNumber = number.trim(); // Ensure no leading/trailing spaces
     });
   }
 
@@ -70,6 +71,12 @@ class _WalletPageState extends State<WalletPage> {
   }
 
   void _showQRCodeDialog() {
+    // Only show dialog if card number is valid
+    if (_cardNumber.isEmpty) {
+      _generateCardNumber(); // Generate if empty
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -106,7 +113,7 @@ class _WalletPageState extends State<WalletPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Nomor Kartu: $_cardNumber',
+                  'Nomor Kartu: ${_cardNumber.replaceAll(' ', '')}',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[600],
@@ -127,10 +134,16 @@ class _WalletPageState extends State<WalletPage> {
                     ],
                   ),
                   child: QrImageView(
-                    data: _cardNumber.replaceAll(' ', ''),
+                    data: _cardNumber.replaceAll(' ', ''), // Remove spaces from card number
                     version: QrVersions.auto,
                     size: 200.0,
                     backgroundColor: Colors.white,
+                    errorStateBuilder: (context, error) => const Center(
+                      child: Text(
+                        'Error generating QR Code',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),

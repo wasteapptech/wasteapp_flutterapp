@@ -307,7 +307,7 @@ class _CameraScreenState extends State<CameraScreen>
         backgroundColor: Colors.black,
         body: Center(
           child: CircularProgressIndicator(
-            color: Colors.green,
+            color: Color(0xFF2cac69),
           ),
         ),
       );
