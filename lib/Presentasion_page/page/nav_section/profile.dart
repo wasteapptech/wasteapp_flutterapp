@@ -34,11 +34,15 @@ class _ProfilePageState extends State<ProfilePage> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
+  bool _notificationsEnabled = false;
+  bool _isCheckingNotificationStatus = true;
+
   @override
   void initState() {
     super.initState();
     _getUserData();
     _loadSavedImage();
+    _checkNotificationStatus();
   }
 
   @override
@@ -65,6 +69,49 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  Future<void> _checkNotificationStatus() async {
+    try {
+      final notificationService = NotificationService();
+      final token = await notificationService.getFcmToken();
+      setState(() {
+        _notificationsEnabled = token != null;
+        _isCheckingNotificationStatus = false;
+      });
+    } catch (e) {
+      print('Error checking notification status: $e');
+      setState(() {
+        _notificationsEnabled = false;
+        _isCheckingNotificationStatus = false;
+      });
+    }
+  }
+
+  Future<void> _toggleNotifications() async {
+    try {
+      setState(() => _isCheckingNotificationStatus = true);
+      
+      final notificationService = NotificationService();
+      
+      if (_notificationsEnabled) {
+        // Disable notifications
+        await notificationService.cleanupToken();
+        setState(() => _notificationsEnabled = false);
+        _showSuccessDialog(message: 'Notifikasi berhasil dinonaktifkan');
+      } else {
+        // Enable notifications
+        await notificationService.initialize();
+        final success = await notificationService.registerDeviceToken();
+        if (success) {
+          setState(() => _notificationsEnabled = true);
+          _showSuccessDialog(message: 'Notifikasi berhasil diaktifkan');
+        }
+      }
+    } catch (e) {
+      _showErrorDialog('Gagal mengubah status notifikasi: $e');
+    } finally {
+      setState(() => _isCheckingNotificationStatus = false);
+    }
+  }
 
   Future<void> _getUserData() async {
     setState(() {
@@ -813,50 +860,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           const SizedBox(height: 24),
 
                           // Other Section
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.1),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 5),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Other',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF2cac69),
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                ListTile(
-                                  leading: const Icon(Icons.info,
-                                      color: Color(0xFF2cac69)),
-                                  title: const Text('About'),
-                                  trailing: const Icon(Icons.chevron_right,
-                                      color: Colors.grey),
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => const AboutPage(),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
+                          _buildOtherSection(),
 
                           const SizedBox(height: 24),
                           Center(
@@ -1009,6 +1013,70 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildOtherSection() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Other',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2cac69),
+            ),
+          ),
+          const SizedBox(height: 16),
+          ListTile(
+            leading: const Icon(Icons.notifications_active, color: Color(0xFF2cac69)),
+            title: const Text('Notifikasi'),
+            trailing: _isCheckingNotificationStatus
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2cac69)),
+                    ),
+                  )
+                : Switch(
+                    value: _notificationsEnabled,
+                    onChanged: (value) => _toggleNotifications(),
+                    activeColor: const Color(0xFF2cac69),
+                  ),
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.info, color: Color(0xFF2cac69)),
+            title: const Text('About'),
+            trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AboutPage(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

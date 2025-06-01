@@ -35,6 +35,8 @@ dependencies:
   percent_indicator: ^4.2.3
   fl_chart: ^0.63.0
   qr_flutter: ^4.1.0
+  pdf: ^3.8.4
+  open_file: ^3.3.2
 
 
 dev_dependencies:

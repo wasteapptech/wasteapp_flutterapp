@@ -82,31 +82,22 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        final Map<String, UserScore> userScores = {};
+        final List<UserScore> scores = [];
         
-        for (var transaction in data) {
-          final username = transaction['username'] as String;
-          final totalTransaksi = transaction['totalTransaksi'] as int;
-          
-          if (userScores.containsKey(username)) {
-            userScores[username]!.totalScore += totalTransaksi;
-            userScores[username]!.transactionCount += 1;
-          } else {
-            userScores[username] = UserScore(
-              username: username,
-              totalScore: totalTransaksi,
-              transactionCount: 1,
-              avatarUrl: _userProfiles[username]?.avatarUrl,
-            );
-          }
+        for (var userTransactions in data) {
+          scores.add(UserScore(
+            username: userTransactions['username'] as String,
+            totalScore: userTransactions['totalSemuaTransaksi'] as int,
+            transactionCount: userTransactions['jumlahTransaksi'] as int,
+            avatarUrl: _userProfiles[userTransactions['username']]?.avatarUrl,
+          ));
         }
 
-        final sortedScores = userScores.values.toList()
-          ..sort((a, b) => b.totalScore.compareTo(a.totalScore));
+        scores.sort((a, b) => b.totalScore.compareTo(a.totalScore));
 
         if (mounted) {
           setState(() {
-            _leaderboard = sortedScores;
+            _leaderboard = scores;
           });
         }
       }
@@ -267,7 +258,11 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                   ),
                 ),
                 Text(
-                  NumberFormat('#,###').format(user.totalScore),
+                  NumberFormat.currency(
+                    locale: 'id',
+                    symbol: 'Rp ',
+                    decimalDigits: 0,
+                  ).format(user.totalScore),
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -364,7 +359,11 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    'Rp ${NumberFormat('#,###').format(userScore.totalScore)}',
+                    NumberFormat.currency(
+                      locale: 'id',
+                      symbol: 'Rp ',
+                      decimalDigits: 0,
+                    ).format(userScore.totalScore),
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -601,15 +600,15 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
 
 class UserScore {
   final String username;
-  int totalScore;
-  int transactionCount;
-  String? avatarUrl;  // Add this
+  final int totalScore;
+  final int transactionCount;
+  final String? avatarUrl;
 
   UserScore({
     required this.username,
     required this.totalScore,
     required this.transactionCount,
-    this.avatarUrl,  // Add this
+    this.avatarUrl,
   });
 }
 

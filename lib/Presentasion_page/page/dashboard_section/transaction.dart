@@ -129,7 +129,7 @@ class _TransactionPageState extends State<TransactionPage> {
 
         final List<Transaction> transactionList = [];
         
-        for (var json in transactions) {
+        for (var json in transactions) {  
           final transaction = Transaction.fromJson(json as Map<String, dynamic>);
           transactionList.add(transaction);
         }

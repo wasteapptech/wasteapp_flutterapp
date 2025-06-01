@@ -268,6 +268,7 @@ class NotificationService {
       final oldToken = prefs.getString(_fcmTokenKey);
 
       if (oldToken != null) {
+        // Delete from backend
         final response = await http
             .post(
               Uri.parse('$_apiBaseUrl/notification/cleanup'),
@@ -282,13 +283,18 @@ class NotificationService {
             .timeout(const Duration(seconds: 10));
 
         if (response.statusCode == 200) {
+          // Clear local storage and FCM token
           await prefs.remove(_fcmTokenKey);
           await _firebaseMessaging.deleteToken();
-          print('Token cleaned up successfully');
+          
+          // Reset notification permissions
+          await _firebaseMessaging.setAutoInitEnabled(false);
+          print('Token and permissions cleaned up successfully');
         }
       }
     } catch (e) {
       print('Error cleaning up token: $e');
+      throw Exception('Failed to cleanup notification token: $e');
     }
   }
 
