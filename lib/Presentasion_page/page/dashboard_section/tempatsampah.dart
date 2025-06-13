@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:wasteapptest/Presentasion_page/page/dashboard_section/dashboard.dart';
 import 'package:wasteapptest/Domain_page/waste.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:ui' as ui;
 
 class TempatSampahPage extends StatefulWidget {
   const TempatSampahPage({super.key});
@@ -27,6 +29,7 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
   final String _openRouteServiceApiKey =
       '5b3ce3597851110001cf62489813e9e1ff0748c1a2c5f2232f31c216';
   BitmapDescriptor? _customMarkerIcon;
+  BitmapDescriptor? _userLocationMarker;
   bool _isMapLoading = true;
   bool _isLocationLoading = false;
   int _mapLoadRetryCount = 0;
@@ -55,6 +58,7 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
   void initState() {
     super.initState();
     _loadCustomMarker();
+    _loadUserData();
     // Start map loading timeout timer
     _mapLoadingTimer = Timer(const Duration(seconds: 10), () {
       if (_isMapLoading && mounted) {
@@ -128,6 +132,85 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
     }
   }
 
+  Future<void> _loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userName = prefs.getString('userName') ?? 'Pengguna';
+    if (userName.isNotEmpty) {
+      try {
+        final response = await http.get(
+          Uri.parse(
+              'https://api-wasteapp.vercel.app/api/user/profile?name=$userName'),
+        );
+
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          final avatarUrl = data['avatarUrl'];
+          if (avatarUrl != null) {
+            await _createCustomUserMarker(avatarUrl);
+          }
+        }
+      } catch (e) {
+        print('Error fetching avatar: $e');
+      }
+    }
+  }
+
+  Future<void> _createCustomUserMarker(String imageUrl) async {
+    try {
+      final response = await http.get(Uri.parse(imageUrl));
+      final bytes = response.bodyBytes;
+      final codec = await ui.instantiateImageCodec(
+        bytes,
+        targetWidth: 150,
+        targetHeight: 150,
+      );
+      final frame = await codec.getNextFrame();
+      final image = frame.image;
+
+      final pictureRecorder = ui.PictureRecorder();
+      final canvas = Canvas(pictureRecorder);
+      final paint = Paint()..isAntiAlias = true;
+
+      paint.color = Colors.white;
+      canvas.drawCircle(const Offset(75, 75), 35, paint);
+
+      paint.color = const Color(0xFF2cac69);
+      paint.style = PaintingStyle.stroke;
+      paint.strokeWidth = 8;
+      canvas.drawCircle(const Offset(75, 75), 35, paint);
+
+      final shader = await _createCircularShader(image);
+      paint
+        ..style = PaintingStyle.fill
+        ..shader = shader;
+      canvas.drawCircle(const Offset(75, 75), 30, paint);
+
+      final markerImage =
+          await pictureRecorder.endRecording().toImage(150, 150);
+      final byteData =
+          await markerImage.toByteData(format: ui.ImageByteFormat.png);
+      final markerBytes = byteData!.buffer.asUint8List();
+
+      if (mounted) {
+        setState(() {
+          _userLocationMarker = BitmapDescriptor.fromBytes(markerBytes);
+        });
+        _setupMarkers(); // Refresh markers
+      }
+    } catch (e) {
+      print('Error creating custom marker: $e');
+    }
+  }
+
+  Future<ui.Shader> _createCircularShader(ui.Image image) async {
+    return ImageShader(
+      image,
+      TileMode.clamp,
+      TileMode.clamp,
+      Matrix4.identity().storage,
+    );
+  }
+
   void _setupMarkers() {
     if (_customMarkerIcon == null) return;
 
@@ -149,8 +232,9 @@ class _TempatSampahPageState extends State<TempatSampahPage> {
       newMarkers.add(Marker(
         markerId: const MarkerId("currentLocation"),
         position: _currentUserLocation!,
-        infoWindow: const InfoWindow(title: "Your Location"),
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueCyan),
+        infoWindow: const InfoWindow(title: "My Location"),
+        icon: _userLocationMarker ??
+            BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueCyan),
       ));
     }
 

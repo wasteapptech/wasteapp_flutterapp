@@ -4,7 +4,7 @@ import 'package:wasteapptest/Presentasion_page/page/dashboard_section/tempatsamp
 import 'package:wasteapptest/Presentasion_page/page/dashboard_section/transaction.dart';
 import 'package:wasteapptest/Presentasion_page/page/nav_section/leaderboard_page.dart';
 import 'package:wasteapptest/Presentasion_page/page/nav_section/profile.dart';
-import 'package:wasteapptest/Services/wastesupport_service.dart';
+import 'package:wasteapptest/Domain_page/wastesupport_service.dart';
 import 'package:wasteapptest/Presentasion_page/page/nav_section/news_page.dart';
 import 'package:wasteapptest/Presentasion_page/page/dashboard_section/survey.dart';
 import 'package:wasteapptest/Domain_page/machinelearning.dart';

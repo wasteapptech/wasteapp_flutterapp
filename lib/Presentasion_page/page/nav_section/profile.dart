@@ -10,7 +10,7 @@ import 'package:wasteapptest/Presentasion_page/page/auth_section/signin.dart';
 import 'package:wasteapptest/Presentasion_page/page/nav_section/about_page.dart';
 import 'package:wasteapptest/Presentasion_page/page/nav_section/leaderboard_page.dart';
 import 'package:wasteapptest/Presentasion_page/page/nav_section/news_page.dart';
-import 'package:wasteapptest/Services/notification_service.dart';
+import 'package:wasteapptest/Domain_page/notification_service.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -89,9 +89,9 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _toggleNotifications() async {
     try {
       setState(() => _isCheckingNotificationStatus = true);
-      
+
       final notificationService = NotificationService();
-      
+
       if (_notificationsEnabled) {
         // Disable notifications
         await notificationService.cleanupToken();
@@ -672,8 +672,8 @@ class _ProfilePageState extends State<ProfilePage> {
             children: [
               CircleAvatar(
                 radius: 100,
-                backgroundImage: _image != null
-                    ? FileImage(_image!)
+                backgroundImage: _avatarUrl != null
+                    ? NetworkImage(_avatarUrl!)
                     : const AssetImage('assets/images/profile.png')
                         as ImageProvider,
               ),
@@ -1045,7 +1045,8 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           const SizedBox(height: 16),
           ListTile(
-            leading: const Icon(Icons.notifications_active, color: Color(0xFF2cac69)),
+            leading: const Icon(Icons.notifications_active,
+                color: Color(0xFF2cac69)),
             title: const Text('Notifikasi'),
             trailing: _isCheckingNotificationStatus
                 ? const SizedBox(
@@ -1053,7 +1054,8 @@ class _ProfilePageState extends State<ProfilePage> {
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2cac69)),
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(Color(0xFF2cac69)),
                     ),
                   )
                 : Switch(

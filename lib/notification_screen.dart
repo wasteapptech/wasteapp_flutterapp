@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../Services/notification_service.dart';
+import 'Domain_page/notification_service.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key, required this.onContinue});

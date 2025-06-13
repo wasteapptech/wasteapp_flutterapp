@@ -31,13 +31,12 @@ dependencies:
   path_provider: ^2.0.0                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
   image: ^4.0.15
   path: ^1.8.3
-  web_socket_channel: ^2.4.0
   percent_indicator: ^4.2.3
   fl_chart: ^0.63.0
   qr_flutter: ^4.1.0
   pdf: ^3.8.4
   open_file: ^3.3.2
-
+  mqtt_client: 10.8.0
 
 dev_dependencies:
   flutter_test:

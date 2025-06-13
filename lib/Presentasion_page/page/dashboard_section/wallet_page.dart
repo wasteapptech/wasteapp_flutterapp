@@ -14,17 +14,16 @@ class Transaction {
   final String type;
   final int amount;
   final String note;
-  final String? bankName; // Add this field
-
+  final String? bankName; 
   Transaction({
     required this.date,
     required this.type,
     required this.amount,
     required this.note,
-    this.bankName, // Add this parameter
+    this.bankName, 
   });
 
-  // Add these methods for JSON conversion
+
   Map<String, dynamic> toJson() => {
         'date': date.toIso8601String(),
         'type': type,
