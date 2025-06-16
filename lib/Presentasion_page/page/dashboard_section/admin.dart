@@ -29,6 +29,34 @@ class WastePrice {
   }
 }
 
+class SensorNotification {
+  final String id;
+  final DateTime createdAt;
+  final String nameSensor;
+  final DateTime timestamp;
+  final double value;
+
+  SensorNotification({
+    required this.id,
+    required this.createdAt,
+    required this.nameSensor,
+    required this.timestamp,
+    required this.value,
+  });
+
+  factory SensorNotification.fromJson(Map<String, dynamic> json) {
+    return SensorNotification(
+      id: json['id'] ?? '',
+      createdAt: DateTime.parse(json['createdAt']),
+      nameSensor: json['nameSensor'] ?? '',
+      timestamp: DateTime.parse(json['timestamp']),
+      value: (json['value'] is int) 
+          ? json['value'].toDouble() 
+          : json['value']?.toDouble() ?? 0.0,
+    );
+  }
+}
+
 class _AdminPageState extends State<AdminPage> {
   bool _isLoggedIn = false;
   bool _isLoading = false;
@@ -52,6 +80,9 @@ class _AdminPageState extends State<AdminPage> {
   List<dynamic> _kegiatanList = [];
   final ImagePicker _picker = ImagePicker();
 
+  List<SensorNotification> _notifications = [];
+  bool _isLoadingNotifications = false;
+
   @override
   void initState() {
     super.initState();
@@ -59,6 +90,7 @@ class _AdminPageState extends State<AdminPage> {
     _selectedDate = DateTime.now();
     if (_isLoggedIn) {
       _fetchPrices();
+      _fetchNotifications();
     }
   }
 
@@ -73,6 +105,31 @@ class _AdminPageState extends State<AdminPage> {
       controller.dispose();
     }
     super.dispose();
+  }
+
+  Future<void> _fetchNotifications() async {
+    setState(() => _isLoadingNotifications = true);
+
+    try {
+      final response = await http.get(
+        Uri.parse('https://api-wasteapp.vercel.app/api/sensor/data'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          _notifications = data
+              .map((item) => SensorNotification.fromJson(item))
+              .toList()
+            ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+        });
+      }
+    } catch (e) {
+      print('Error fetching notifications: $e');
+      _showErrorDialog('Failed to load notifications');
+    } finally {
+      setState(() => _isLoadingNotifications = false);
+    }
   }
 
   Future<void> _selectImage() async {
@@ -143,6 +200,7 @@ class _AdminPageState extends State<AdminPage> {
         });
         await _fetchPrices();
         await _fetchKegiatan();
+        await _fetchNotifications();
       } else {
         setState(() {
           _isLoading = false;
@@ -676,6 +734,7 @@ class _AdminPageState extends State<AdminPage> {
             children: [
               _buildKegiatanContent(),
               _buildDaftarHargaContent(),
+              _buildNotificationsContent(),
             ],
           ),
         ),
@@ -733,89 +792,189 @@ class _AdminPageState extends State<AdminPage> {
       ),
       child: Row(
         children: [
-          Expanded(
-            child: InkWell(
-              onTap: () {
-                setState(() {
-                  _selectedTabIndex = 0;
-                });
-              },
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: _selectedTabIndex == 0
-                      ? const Color(0xFF2cac69)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.event,
-                      color: _selectedTabIndex == 0
-                          ? Colors.white
-                          : Colors.grey[600],
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Kegiatan',
-                      style: TextStyle(
-                        color: _selectedTabIndex == 0
-                            ? Colors.white
-                            : Colors.grey[600],
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: InkWell(
-              onTap: () {
-                setState(() {
-                  _selectedTabIndex = 1;
-                });
-              },
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: _selectedTabIndex == 1
-                      ? const Color(0xFF2cac69)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.monetization_on,
-                      color: _selectedTabIndex == 1
-                          ? Colors.white
-                          : Colors.grey[600],
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Daftar Harga',
-                      style: TextStyle(
-                        color: _selectedTabIndex == 1
-                            ? Colors.white
-                            : Colors.grey[600],
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+          _buildTabItem(0, Icons.event, 'Kegiatan'),
+          _buildTabItem(1, Icons.monetization_on, 'Daftar Harga'),
+          _buildTabItem(2, Icons.notifications, 'Notifikasi'),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTabItem(int index, IconData icon, String label) {
+    return Expanded(
+      child: InkWell(
+        onTap: () => setState(() => _selectedTabIndex = index),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: _selectedTabIndex == index
+                ? const Color(0xFF2cac69)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                color: _selectedTabIndex == index
+                    ? Colors.white
+                    : Colors.grey[600],
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: _selectedTabIndex == index
+                      ? Colors.white
+                      : Colors.grey[600],
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotificationsContent() {
+    if (_isLoadingNotifications) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return RefreshIndicator(
+      onRefresh: _fetchNotifications,
+      color: const Color(0xFF2cac69),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: _notifications.length,
+        itemBuilder: (context, index) {
+          final notification = _notifications[index];
+          
+          IconData icon;
+          Color color;
+          String sensorDisplay;
+          String valueDisplay;
+          
+          switch (notification.nameSensor) {
+            case 'mq4':
+              icon = Icons.local_fire_department;
+              color = Colors.red;
+              sensorDisplay = 'Gas Sensor';
+              valueDisplay = '${notification.value.toStringAsFixed(0)} ppm';
+              break;
+            case 'dht-temp':
+              icon = Icons.thermostat;
+              color = Colors.orange;
+              sensorDisplay = 'Temperature Sensor';
+              valueDisplay = '${notification.value.toStringAsFixed(1)}°C';
+              break;
+            case 'dht-humidity':
+              icon = Icons.water_drop;
+              color = Colors.blue;
+              sensorDisplay = 'Humidity Sensor';
+              valueDisplay = '${notification.value.toStringAsFixed(1)}%';
+              break;
+            case 'ultrasonic1':
+              icon = Icons.height;
+              color = Colors.green;
+              sensorDisplay = 'Organic Waste Level';
+              valueDisplay = '${notification.value.toStringAsFixed(0)} %';
+              break;
+            case 'ultrasonic2':
+              icon = Icons.height;
+              color = Colors.purple;
+              sensorDisplay = 'Inorganic Waste Level';
+              valueDisplay = '${notification.value.toStringAsFixed(0)} %';
+              break;
+            default:
+              icon = Icons.sensors;
+              color = Colors.grey;
+              sensorDisplay = notification.nameSensor;
+              valueDisplay = notification.value.toString();
+          }
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  spreadRadius: 2,
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: ListTile(
+              contentPadding: const EdgeInsets.all(16),
+              leading: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 24),
+              ),
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    sensorDisplay,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      valueDisplay,
+                      style: TextStyle(
+                        color: color,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.access_time,
+                      size: 14,
+                      color: Colors.grey[600],
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      DateFormat('dd MMM yyyy HH:mm').format(notification.timestamp),
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
