@@ -4,9 +4,11 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wasteapptest/Presentasion_page/page/dashboard_section/dashboard.dart';  
 import 'package:wasteapptest/Domain_page/machinelearning.dart';
+import 'package:wasteapptest/Presentasion_page/page/nav_section/leaderboard_user_page.dart';
 import 'package:wasteapptest/Presentasion_page/page/nav_section/news_page.dart';
 import 'package:wasteapptest/Presentasion_page/page/nav_section/profile.dart';
 import 'package:intl/intl.dart';
+
 
 class LeaderboardPage extends StatefulWidget {
   const LeaderboardPage({super.key});
@@ -151,129 +153,143 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
             ? const Color(0xFFE5E4E2) 
             : const Color(0xFFCD7F32);
 
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        if (position == 1)
-          const Icon(Icons.military_tech, color: Color(0xFFFFD700), size: 40),
-        if (position == 2)
-          const Icon(Icons.stars, color: Color(0xFFC0C0C0), size: 40), 
-        if (position == 3)
-          const Icon(Icons.emoji_events, color: Color(0xFFCD7F32), size: 40), 
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => LeaderboardUserPage(
+              email: _userProfiles[user.username]?.email ?? '',
+              username: user.username,
+              avatarUrl: user.avatarUrl,
+            ),
+          ),
+        );
+      },
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          if (position == 1)
+            const Icon(Icons.military_tech, color: Color(0xFFFFD700), size: 40),
+          if (position == 2)
+            const Icon(Icons.stars, color: Color(0xFFC0C0C0), size: 40), 
+          if (position == 3)
+            const Icon(Icons.emoji_events, color: Color(0xFFCD7F32), size: 40), 
 
 
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: podiumColor, width: 3),
-            boxShadow: [
-              BoxShadow(
-                color: podiumColor.withOpacity(0.5),
-                blurRadius: 10,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-          child: CircleAvatar(
-            radius: position == 1 ? 45 : 35,
-            backgroundColor: Colors.white,
-            backgroundImage: user.avatarUrl != null
-                ? NetworkImage(user.avatarUrl!)
-                : const AssetImage('assets/images/profile.png') as ImageProvider,
-          ),
-        ),
-        const SizedBox(height: 8),
-        
-        // Username and stats
-        Container(
-          width: 100,
-          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.2),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Text(
-                user.username,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: position == 1 ? 16 : 14,
-                  color: isCurrentUser ? const Color(0xFF2cac69) : Colors.black87,
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: podiumColor, width: 3),
+              boxShadow: [
+                BoxShadow(
+                  color: podiumColor.withOpacity(0.5),
+                  blurRadius: 10,
+                  spreadRadius: 2,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              Text(
-                '${user.transactionCount} transaksi',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        
-        // Score container
-        Container(
-          width: 100,
-          height: height,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                podiumColor,
-                podiumColor.withOpacity(0.8),
               ],
             ),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-            boxShadow: [
-              BoxShadow(
-                color: podiumColor.withOpacity(0.3),
-                blurRadius: 8,
-                offset: const Offset(0, -4),
-              ),
-            ],
+            child: CircleAvatar(
+              radius: position == 1 ? 45 : 35,
+              backgroundColor: Colors.white,
+              backgroundImage: user.avatarUrl != null
+                  ? NetworkImage(user.avatarUrl!)
+                  : const AssetImage('assets/images/profile.png') as ImageProvider,
+            ),
           ),
-          child: Center(
+          const SizedBox(height: 8),
+          
+          // Username and stats
+          Container(
+            width: 100,
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.2),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
-                  'Total',
+                Text(
+                  user.username,
                   style: TextStyle(
-                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: position == 1 ? 16 : 14,
+                    color: isCurrentUser ? const Color(0xFF2cac69) : Colors.black87,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  '${user.transactionCount} transaksi',
+                  style: TextStyle(
+                    color: Colors.grey[600],
                     fontSize: 12,
                   ),
                 ),
-                Text(
-                  NumberFormat.currency(
-                    locale: 'id',
-                    symbol: 'Rp ',
-                    decimalDigits: 0,
-                  ).format(user.totalScore),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
               ],
             ),
           ),
-        ),
-      ],
+          const SizedBox(height: 8),
+          
+          // Score container
+          Container(
+            width: 100,
+            height: height,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  podiumColor,
+                  podiumColor.withOpacity(0.8),
+                ],
+              ),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+              boxShadow: [
+                BoxShadow(
+                  color: podiumColor.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, -4),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Total',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                    ),
+                  ),
+                  Text(
+                    NumberFormat.currency(
+                      locale: 'id',
+                      symbol: 'Rp ',
+                      decimalDigits: 0,
+                    ).format(user.totalScore),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -286,92 +302,106 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
         final userScore = _leaderboard[index + 3];
         final isCurrentUser = userScore.username == _currentUserName;
 
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: isCurrentUser ? const Color(0xFFE8F5E9) : Colors.white,
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                spreadRadius: 1,
-                blurRadius: 5,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: ListTile(
-            contentPadding: const EdgeInsets.all(12),
-            leading: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: const Color(0xFF2cac69).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: Text(
-                  '${index + 4}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    color: Color(0xFF2cac69),
-                  ),
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => LeaderboardUserPage(
+                  email: _userProfiles[userScore.username]?.email ?? '',
+                  username: userScore.username,
+                  avatarUrl: userScore.avatarUrl,
                 ),
               ),
+            );
+          },
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: isCurrentUser ? const Color(0xFFE8F5E9) : Colors.white,
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  spreadRadius: 1,
+                  blurRadius: 5,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
-            title: Row(
-              children: [
-                CircleAvatar(
-                  radius: 25,
-                  backgroundColor: Colors.white,
-                  backgroundImage: userScore.avatarUrl != null
-                      ? NetworkImage(userScore.avatarUrl!)
-                      : const AssetImage('assets/images/profile.png') as ImageProvider,
+            child: ListTile(
+              contentPadding: const EdgeInsets.all(12),
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2cac69).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        userScore.username,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: isCurrentUser ? const Color(0xFF2cac69) : Colors.black87,
-                        ),
-                      ),
-                      Text(
-                        '${userScore.transactionCount} transaksi',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2cac69).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
+                child: Center(
                   child: Text(
-                    NumberFormat.currency(
-                      locale: 'id',
-                      symbol: 'Rp ',
-                      decimalDigits: 0,
-                    ).format(userScore.totalScore),
+                    '${index + 4}',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                      fontSize: 18,
                       color: Color(0xFF2cac69),
                     ),
                   ),
                 ),
-              ],
+              ),
+              title: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 25,
+                    backgroundColor: Colors.white,
+                    backgroundImage: userScore.avatarUrl != null
+                        ? NetworkImage(userScore.avatarUrl!)
+                        : const AssetImage('assets/images/profile.png') as ImageProvider,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          userScore.username,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: isCurrentUser ? const Color(0xFF2cac69) : Colors.black87,
+                          ),
+                        ),
+                        Text(
+                          '${userScore.transactionCount} transaksi',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2cac69).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      NumberFormat.currency(
+                        locale: 'id',
+                        symbol: 'Rp ',
+                        decimalDigits: 0,
+                      ).format(userScore.totalScore),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Color(0xFF2cac69),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );

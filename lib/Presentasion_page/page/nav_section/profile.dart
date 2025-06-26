@@ -153,18 +153,27 @@ class _ProfilePageState extends State<ProfilePage> {
       final prefs = await SharedPreferences.getInstance();
       final currentName = prefs.getString('userName') ?? '';
 
+      // Check if there are any changes
+      bool hasChanges = false;
+      if (_nameController.text != currentName) hasChanges = true;
+      if (_newEmailController.text.isNotEmpty && _newEmailController.text != _emailController.text) {
+        hasChanges = true;
+      }
+
       var uri = Uri.parse('https://api-wasteapp.vercel.app/api/user/profile');
       var request = http.MultipartRequest('PUT', uri);
 
       // Add text fields
       request.fields['currentName'] = currentName;
       request.fields['newName'] = _nameController.text;
+      
       if (_newEmailController.text.isNotEmpty) {
         request.fields['newEmail'] = _newEmailController.text;
       }
 
       // Add image file if selected
       if (_image != null) {
+        hasChanges = true;
         var stream = http.ByteStream(_image!.openRead());
         var length = await _image!.length();
         var multipartFile = http.MultipartFile(
@@ -181,33 +190,93 @@ class _ProfilePageState extends State<ProfilePage> {
       var jsonResponse = json.decode(responseData);
 
       if (response.statusCode == 200) {
+        // Handle both update and no-changes scenarios
+        final message = jsonResponse['message'];
         final updatedUser = jsonResponse['user'];
 
-        await prefs.setString('userName', updatedUser['name']);
-        if (updatedUser['email'] != null) {
+        // Update SharedPreferences only if name changed
+        if (updatedUser['name'] != currentName) {
+          await prefs.setString('userName', updatedUser['name']);
+        }
+
+        // Update email in SharedPreferences if changed
+        if (updatedUser['email'] != _emailController.text) {
           await prefs.setString('userEmail', updatedUser['email']);
         }
 
         setState(() {
-          userData = updatedUser;
+          userData = {
+            ...userData,
+            'name': updatedUser['name'],
+            'email': updatedUser['email'],
+            'avatarUrl': updatedUser['avatarUrl'],
+          };
           _nameController.text = updatedUser['name'];
           _emailController.text = updatedUser['email'];
           _avatarUrl = updatedUser['avatarUrl'];
         });
 
         _newEmailController.clear();
-        _showSuccessDialog(message: 'Profile updated successfully');
+
+        if (hasChanges) {
+          _showSuccessDialog(message: message ?? 'Profile updated successfully');
+        } else {
+          _showSuccessDialog(message: message ?? 'No changes were needed');
+        }
       } else {
-        _showErrorDialog(jsonResponse['error'] ?? 'Failed to update profile');
+        final error = jsonResponse['error'] ?? 'Failed to update profile';
+        if (error.contains('Username already in use')) {
+          _showErrorDialog('This username is already taken');
+        } else if (error.contains('Email already in use')) {
+          _showErrorDialog('This email is already registered');
+        } else {
+          _showErrorDialog(error);
+        }
       }
     } catch (e) {
-      _showErrorDialog('Error: $e');
+      _showErrorDialog('Error updating profile: $e');
     }
   }
 
+  bool _validatePassword(String password) {
+    // Check minimum length
+    if (password.length < 8) return false;
+
+    // Check for uppercase letter
+    if (!password.contains(RegExp(r'[A-Z]'))) return false;
+
+    // Check for lowercase letter
+    if (!password.contains(RegExp(r'[a-z]'))) return false;
+
+    // Check for number
+    if (!password.contains(RegExp(r'[0-9]'))) return false;
+
+    // Check for special character
+    if (!password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) return false;
+
+    return true;
+  }
+
   Future<void> _resetPassword() async {
+    if (_passwordController.text.isEmpty || _confirmPasswordController.text.isEmpty) {
+      _showErrorDialog('Password tidak boleh kosong');
+      return;
+    }
+
     if (_passwordController.text != _confirmPasswordController.text) {
-      _showErrorDialog('Passwords do not match');
+      _showErrorDialog('Password tidak cocok');
+      return;
+    }
+
+    if (!_validatePassword(_passwordController.text)) {
+      _showErrorDialog(
+        'Password harus mengandung:\n'
+        '• Minimal 8 karakter\n'
+        '• Huruf besar (A-Z)\n'
+        '• Huruf kecil (a-z)\n'
+        '• Angka (0-9)\n'
+        '• Karakter khusus (!@#\$%^&*(),.?":{}|<>)'
+      );
       return;
     }
 
@@ -216,7 +285,7 @@ class _ProfilePageState extends State<ProfilePage> {
       final userEmail = prefs.getString('userEmail') ?? '';
 
       if (userEmail.isEmpty) {
-        _showErrorDialog('User email not found. Please log in again.');
+        _showErrorDialog('Email pengguna tidak ditemukan. Silakan login kembali.');
         return;
       }
 
@@ -229,19 +298,19 @@ class _ProfilePageState extends State<ProfilePage> {
         }),
       );
 
+      final responseData = json.decode(response.body);
+
       if (response.statusCode == 200) {
         _passwordController.clear();
         _confirmPasswordController.clear();
 
-        _showSuccessDialog(message: 'Password updated successfully').then((_) {
-          Navigator.of(context).pop();
-        });
+        _showSuccessDialog(message: responseData['message'] ?? 'Password berhasil diperbarui')
+            .then((_) => Navigator.of(context).pop());
       } else {
-        final errorData = json.decode(response.body);
-        _showErrorDialog(errorData['error'] ?? 'Failed to reset password');
+        _showErrorDialog(responseData['error'] ?? 'Gagal mereset password');
       }
     } catch (e) {
-      _showErrorDialog('Error: $e');
+      _showErrorDialog('Terjadi kesalahan: $e');
     }
   }
 
@@ -587,10 +656,23 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const Text(
+                'Password harus mengandung:\n'
+                '• Minimal 8 karakter\n'
+                '• Huruf besar (A-Z)\n'
+                '• Huruf kecil (a-z)\n'
+                '• Angka (0-9)\n'
+                '• Karakter khusus (!@#\$%^&*(),.?":{}|<>)',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                ),
+              ),
+              const SizedBox(height: 16),
               TextField(
                 controller: _passwordController,
                 decoration: const InputDecoration(
-                  labelText: 'New Password',
+                  labelText: 'Password Baru',
                   border: OutlineInputBorder(),
                 ),
                 obscureText: true,
@@ -599,7 +681,7 @@ class _ProfilePageState extends State<ProfilePage> {
               TextField(
                 controller: _confirmPasswordController,
                 decoration: const InputDecoration(
-                  labelText: 'Confirm New Password',
+                  labelText: 'Konfirmasi Password Baru',
                   border: OutlineInputBorder(),
                 ),
                 obscureText: true,
@@ -610,11 +692,14 @@ class _ProfilePageState extends State<ProfilePage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('Batal'),
           ),
           TextButton(
-            onPressed: _resetPassword,
-            child: const Text('Update',
+            onPressed: () {
+              Navigator.pop(context);
+              _resetPassword();
+            },
+            child: const Text('Perbarui',
                 style: TextStyle(color: Color(0xFF2cac69))),
           ),
         ],

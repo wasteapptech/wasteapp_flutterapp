@@ -175,11 +175,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
-          _userBalance = data['totalSemuaTransaksi'] ?? 0;
+          _userBalance = data['transactionSummary']['totalSemuaTransaksi'] ?? 0;
           _isLoadingBalance = false;
+          
+          // Update avatar URL if available
+          if (data['userInfo'] != null && data['userInfo']['avatarUrl'] != null) {
+            _avatarUrl = data['userInfo']['avatarUrl'];
+          }
         });
       } else {
-
         setState(() => _isLoadingBalance = false);
       }
     } catch (e) {

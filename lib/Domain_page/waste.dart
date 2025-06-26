@@ -107,6 +107,7 @@ class _WasteBinStatusState extends State<WasteBinStatus> {
   WasteData? _wasteData;
   late MqttServerClient client;
   bool isConnected = false;
+  bool isDataReceived = false; // Add this flag
   final List<FlSpot> temperatureData = [];
   final List<FlSpot> humidityData = [];
   final List<FlSpot> gasData = [];
@@ -124,24 +125,31 @@ class _WasteBinStatusState extends State<WasteBinStatus> {
   Future<void> setupMqttClient() async {
     if (!_mounted) return;
 
+    setState(() {
+      isConnected = false;
+      isDataReceived = false;
+    });
+
     client = MqttServerClient('broker.hivemq.com',
         'flutter_client${DateTime.now().millisecondsSinceEpoch}');
     client.port = 1883;
     client.keepAlivePeriod = 60;
     client.onConnected = onConnected;
     client.onDisconnected = onDisconnected;
+    client.onSubscribed = onSubscribed;
 
     try {
       await client.connect();
-      if (_mounted) {
-        subscribeToTopics();
-      }
     } catch (e) {
       print('Exception: $e');
       if (_mounted) {
         client.disconnect();
       }
     }
+  }
+
+  void onSubscribed(String topic) {
+    print('Subscribed to: $topic');
   }
 
   void subscribeToTopics() {
@@ -161,17 +169,15 @@ class _WasteBinStatusState extends State<WasteBinStatus> {
     if (!_mounted) return;
 
     try {
-
       final data = json.decode(payload);
       if (!_mounted) return;
 
       final newData = WasteData.fromJson(data);
-
       final roundedMQ4 = newData.mq4Value.round();
 
       setState(() {
         _wasteData = newData;
-        isConnected = true;
+        isDataReceived = true; // Set this flag when data is received
 
         final now = DateTime.now();
         timestamps.add(now);
@@ -186,7 +192,7 @@ class _WasteBinStatusState extends State<WasteBinStatus> {
         final xValue = now.millisecondsSinceEpoch.toDouble();
         temperatureData.add(FlSpot(xValue, newData.temperature));
         humidityData.add(FlSpot(xValue, newData.humidity));
-        gasData.add(FlSpot(xValue, roundedMQ4.toDouble())); // Use rounded value
+        gasData.add(FlSpot(xValue, roundedMQ4.toDouble()));
       });
     } catch (e) {
       print('Error parsing data: $e');
@@ -197,11 +203,59 @@ class _WasteBinStatusState extends State<WasteBinStatus> {
   void onConnected() {
     if (!_mounted) return;
     setState(() => isConnected = true);
+    subscribeToTopics();
   }
 
   void onDisconnected() {
     if (!_mounted) return;
-    setState(() => isConnected = false);
+    setState(() {
+      isConnected = false;
+      isDataReceived = false;
+    });
+  }
+
+  Widget _buildLoadingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  spreadRadius: 0,
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2cac69)),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  isConnected 
+                    ? 'Connected to MQTT\nWaiting for data...'
+                    : 'Connecting to MQTT...',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFF2cac69),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildStatusCard() {
@@ -794,6 +848,31 @@ class _WasteBinStatusState extends State<WasteBinStatus> {
 
   @override
   Widget build(BuildContext context) {
+    // Show loading state until connected and data is received
+    if (!isConnected || !isDataReceived) {
+      return Scaffold(
+        backgroundColor: Colors.grey.shade50,
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF2cac69),
+          elevation: 0,
+          title: const Text(
+            'Waste Bin Monitoring',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 20,
+            ),
+          ),
+          centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+        body: _buildLoadingState(),
+      );
+    }
+
     double organicFillLevel =
         _wasteData != null ? calculateFillLevel(_wasteData!.distance1) : 0;
     double inorganicFillLevel =

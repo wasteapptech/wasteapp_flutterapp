@@ -108,7 +108,7 @@ class _WalletPageState extends State<WalletPage> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
-          _userBalance = data['totalSemuaTransaksi'] ?? 0;
+           _userBalance = data['transactionSummary']['totalSemuaTransaksi'] ?? 0;
           _isLoadingBalance = false;
         });
       } else {

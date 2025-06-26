@@ -84,7 +84,6 @@ class TransactionPage extends StatefulWidget {
   State<TransactionPage> createState() => _TransactionPageState();
 }
 
-
 class _TransactionPageState extends State<TransactionPage> {
   bool _isLoading = false;
   String _username = '';
@@ -101,7 +100,6 @@ class _TransactionPageState extends State<TransactionPage> {
     super.initState();
     initializeDateFormatting('id_ID').then((_) {
       _loadUserData();
-      _fetchTransactions();
     });
   }
 
@@ -121,26 +119,33 @@ class _TransactionPageState extends State<TransactionPage> {
           throw Exception('Response data is null');
         }
 
-        final List<dynamic>? transactions = responseData['transaksi'] as List<dynamic>?;
+        // Update to use new response structure
+        final transactionSummary = responseData['transactionSummary'];
+        final List<dynamic>? transactions = responseData['transactions'] as List<dynamic>?;
+        final userInfo = responseData['userInfo'];
         
         if (transactions == null) {
           throw Exception('Transactions data is null');
         }
 
-        final List<Transaction> transactionList = [];
-        
-        for (var json in transactions) {  
-          final transaction = Transaction.fromJson(json as Map<String, dynamic>);
-          transactionList.add(transaction);
-        }
+        final List<Transaction> transactionList = transactions.map((json) {
+          return Transaction.fromJson(json as Map<String, dynamic>);
+        }).toList();
 
         setState(() {
           _transactions = transactionList;
           _transactions.sort((a, b) => b.createdAt.compareTo(a.createdAt));
           
-          // Update total values
-          _totalSemuaTransaksi = responseData['totalSemuaTransaksi'] ?? 0;
-          _jumlahTransaksi = responseData['jumlahTransaksi'] ?? 0;
+          // Update total values from transactionSummary
+          _totalSemuaTransaksi = transactionSummary['totalSemuaTransaksi'] ?? 0;
+          _jumlahTransaksi = transactionSummary['totalTransactions'] ?? 0;
+
+          // Update user info if available
+          if (userInfo != null) {
+            _username = userInfo['name'] ?? _username;
+            _email = userInfo['email'] ?? _email;
+            _avatarUrl = userInfo['avatarUrl'] ?? _avatarUrl;
+          }
         });
       } else {
         throw Exception('Failed to fetch transactions: ${response.statusCode}');
@@ -153,6 +158,22 @@ class _TransactionPageState extends State<TransactionPage> {
     }
   }
 
+  Future<void> _loadUserData() async {
+    setState(() => _isLoading = true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      setState(() {
+        _username = prefs.getString('userName') ?? '';
+        _email = prefs.getString('userEmail') ?? '';
+      });
+      await _fetchTransactions(); // This will also update user info
+    } catch (e) {
+      print('Error loading user data: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
   Future<void> _refreshTransactions() async {
     setState(() => _isLoadingTransactions = true);
     await _fetchTransactions();
@@ -161,45 +182,6 @@ class _TransactionPageState extends State<TransactionPage> {
   String _formatDate(DateTime date) {
     final jakartaTime = date.toUtc().add(const Duration(hours: 7));
     return DateFormat('dd/MM/yyyy HH:mm', 'id_ID').format(jakartaTime);
-  }
-
-  Future<void> _loadUserData() async {
-    setState(() => _isLoading = true);
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final userName = prefs.getString('userName') ?? '';
-      
-      setState(() {
-        _username = userName;
-        _email = prefs.getString('userEmail') ?? '';
-      });
-
-      // Fetch avatar URL for the current user
-      if (userName.isNotEmpty) {
-        _avatarUrl = await _fetchUserAvatar(userName);
-        setState(() {});
-      }
-    } catch (e) {
-      print('Error loading user data: $e');
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  Future<String?> _fetchUserAvatar(String username) async {
-    try {
-      final response = await http.get(
-        Uri.parse('https://api-wasteapp.vercel.app/api/user/profile?name=$username'),
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return data['avatarUrl'] as String?;
-      }
-    } catch (e) {
-      print('Error fetching avatar: $e');
-    }
-    return null;
   }
 
   Widget _buildEmptyState() {
