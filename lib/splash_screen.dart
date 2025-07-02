@@ -18,7 +18,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _navigateAfterSplash() async {
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(seconds: 4));
 
     if (!mounted) return;
 
@@ -35,51 +35,58 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFF2cac69),
       body: Stack(
         children: [
-          Center(
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Image.asset(
+              'assets/images/grass.png', 
+              fit: BoxFit.cover,
+              height: 190, 
+            ),
+          ),
+          
+          // Main content
+          const Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.asset(
-                  'assets/images/logo2.png',
-                  width: 200,
-                  height: 200,
-                ),
-                const SizedBox(height: 20),
-                const Text(
+                Text(
                   'WasteApp',
                   style: TextStyle(
-                    fontSize: 32,
+                    fontSize: 48,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF2cac69),
+                    color: Colors.white,
                     fontFamily: 'Poppins',
                   ),
                 ),
-                const Text(
+                Text(
                   'Smart Waste, Smart Income',
                   style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
+                    fontSize: 18,
+                    color: Colors.white70,
                     fontFamily: 'Poppins',
                   ),
                 ),
               ],
             ),
           ),
+          
           const Positioned(
-            bottom: 20,
+            bottom: 165, 
             left: 0,
             right: 0,
             child: Column(
-              children: [
+              children:  [
                 Text(
                   'Copyright © 2025',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey,
+                    color: Colors.white70,
                     fontFamily: 'Poppins',
                   ),
                 ),
@@ -88,7 +95,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey,
+                    color: Colors.white70,
                     fontFamily: 'Poppins',
                   ),
                 ),
@@ -97,7 +104,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey,
+                    color: Colors.white70,
                     fontFamily: 'Poppins',
                   ),
                 ),

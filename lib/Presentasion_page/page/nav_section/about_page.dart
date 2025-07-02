@@ -10,7 +10,6 @@ class AboutPage extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Modern app bar with gradient
             Container(
               padding: const EdgeInsets.all(20.0),
               decoration: const BoxDecoration(
@@ -89,7 +88,6 @@ class AboutPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 32),
 
-                  // About section with modern card
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(

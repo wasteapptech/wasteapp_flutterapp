@@ -62,8 +62,9 @@ class _LeaderboardUserPageState extends State<LeaderboardUserPage>
       );
 
       if (response.statusCode == 200) {
+        final data = json.decode(response.body);
         setState(() {
-          userData = json.decode(response.body);
+          userData = data;
           isLoading = false;
           _calculateUserRank();
         });
@@ -386,7 +387,7 @@ class _LeaderboardUserPageState extends State<LeaderboardUserPage>
     );
   }
 
-  Widget _buildModernTransactionTable() {
+  Widget _buildTransactionTable() {
     final transactions = (userData?['transactions'] as List?) ?? [];
 
     return Container(
@@ -559,12 +560,11 @@ class _LeaderboardUserPageState extends State<LeaderboardUserPage>
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        
         elevation: 0,
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios,
-            color:  Color(0xFF2cac69),
+            color: Color(0xFF2cac69),
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -617,7 +617,7 @@ class _LeaderboardUserPageState extends State<LeaderboardUserPage>
                 const SizedBox(height: 24),
                 _buildLastTransactionCard(),
                 const SizedBox(height: 24),
-                _buildModernTransactionTable(),
+                _buildTransactionTable(),
               ],
             ),
           ),

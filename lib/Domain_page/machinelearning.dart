@@ -78,7 +78,7 @@ class _CameraScreenState extends State<CameraScreen>
         await _turnOnTorch();
       }
     } catch (e) {
-      _showModernDialog(
+      _showDialog(
         title: 'Flash Error',
         message: 'Unable to toggle flash.',
       );
@@ -240,7 +240,7 @@ class _CameraScreenState extends State<CameraScreen>
     );
   }
 
-  void _showModernDialog({required String title, required String message}) {
+  void _showDialog({required String title, required String message}) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -388,7 +388,6 @@ class _CameraScreenState extends State<CameraScreen>
               ),
             ),
 
-            // Modern Scan Area
             Center(
               child: AnimatedBuilder(
                 animation: _pulseAnimation,
@@ -445,7 +444,6 @@ class _CameraScreenState extends State<CameraScreen>
               ),
             ),
 
-            // Modern Capture Button
             Positioned(
               bottom: 50,
               left: 0,
