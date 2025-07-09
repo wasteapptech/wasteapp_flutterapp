@@ -569,18 +569,6 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
         appBar: AppBar(
           backgroundColor: const Color(0xFF2cac69),
           elevation: 0,
-          leading: IconButton(
-            icon: const Icon(
-              Icons.arrow_back_ios,
-              color: Colors.white,
-            ),
-            onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const DashboardScreen()),
-              );
-            },
-          ),
           title: const Text(
             'Leaderboard',
             style: TextStyle(

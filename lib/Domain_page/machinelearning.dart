@@ -78,9 +78,11 @@ class _CameraScreenState extends State<CameraScreen>
         await _turnOnTorch();
       }
     } catch (e) {
-      _showDialog(
-        title: 'Flash Error',
-        message: 'Unable to toggle flash.',
+      print('Error toggling torch: $e');
+      _showErrorDialog(
+        title: 'Torch Error',
+        message:
+            'Gagal mengubah mode lampu senter. Pastikan kamera berfungsi dengan baik.',
       );
     }
   }
@@ -116,7 +118,10 @@ class _CameraScreenState extends State<CameraScreen>
 
   Future<void> _initializeCamera() async {
     if (cameras.isEmpty) {
-      _showErrorDialog('No camera available');
+      _showErrorDialog(
+        title: 'No Camera Found',
+        message: 'Tidak ada kamera yang tersedia pada perangkat ini.',
+      );
       return;
     }
 
@@ -131,63 +136,76 @@ class _CameraScreenState extends State<CameraScreen>
       await _controller!.initialize();
       if (mounted) setState(() {});
     } catch (e) {
-      _showErrorDialog('Error initializing camera: $e');
+      print('Error initializing camera: $e');
+      _showErrorDialog(
+        title: 'Camera Error',
+        message:
+            'Gagal menginisialisasi kamera. Pastikan kamera berfungsi dengan baik.',
+      );
+      return;
     }
   }
 
   Future<void> _captureAndDetect() async {
-    if (_controller == null ||
-        !_controller!.value.isInitialized ||
-        _isDetecting) {
-      return;
-    }
-
-    setState(() {
-      _isDetecting = true;
-    });
-
-    final startTime = DateTime.now(); // Add this line to track start time
-    _scanAnimationController.repeat();
-
-    try {
-      final XFile imageFile = await _controller!.takePicture();
-      final File file = File(imageFile.path);
-      final result = await _sendImageForDetection(file, startTime); // Pass startTime
-
-      _scanAnimationController.stop();
-
-      if (result != null &&
-          result['detections'] != null &&
-          result['detections'].isNotEmpty) {
-        // Calculate total processing time
-        final endTime = DateTime.now();
-        final processingTime = endTime.difference(startTime).inMilliseconds;
-        result['total_processing_time'] = processingTime; // Add processing time to result
-
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ResultScreen(
-              imagePath: imageFile.path,
-              detectionResult: result,
-            ),
-          ),
-        );
-      } else {
-        _showErrorDialog(
-            'Tidak ada objek yang terdeteksi dalam gambar. Silakan coba lagi.');
-      }
-    } catch (e) {
-      _scanAnimationController.stop();
-      _showErrorDialog('Error: ${e.toString()}');
-    } finally {
-      setState(() {
-        _isDetecting = false;
-      });
-    }
+  if (_controller == null ||
+      !_controller!.value.isInitialized ||
+      _isDetecting) {
+    return;
   }
 
-  Future<Map<String, dynamic>?> _sendImageForDetection(File imageFile, DateTime startTime) async {
+  setState(() {
+    _isDetecting = true;
+  });
+
+  final startTime = DateTime.now();
+  _scanAnimationController.repeat();
+
+  try {
+    final XFile imageFile = await _controller!.takePicture();
+    final File file = File(imageFile.path);
+    final result = await _sendImageForDetection(file, startTime);
+
+    _scanAnimationController.stop();
+
+    if (result != null) {
+      // Calculate total processing time
+      final endTime = DateTime.now();
+      final processingTime = endTime.difference(startTime).inMilliseconds;
+      result['total_processing_time'] = processingTime;
+
+      // Navigate to result screen regardless of detection results
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ResultScreen(
+            imagePath: imageFile.path,
+            detectionResult: result,
+          ),
+        ),
+      );
+    } else {
+      _showErrorDialog(
+        title: 'Detection Error',
+        message: 'Gagal memproses deteksi. '
+            'Pastikan koneksi internet stabil dan coba lagi.',
+      );
+    }
+  } catch (e) {
+    _scanAnimationController.stop();
+    _showErrorDialog(
+      title: 'Error',
+      message: 'Gagal mengambil gambar atau mengirim untuk deteksi. '
+          'Pastikan kamera berfungsi dengan baik dan koneksi internet stabil.',
+    );
+  } finally {
+    setState(() {
+      _isDetecting = false;
+    });
+  }
+}
+
+  Future<Map<String, dynamic>?> _sendImageForDetection(
+      File imageFile, DateTime startTime) async {
     try {
       final bytes = await imageFile.readAsBytes();
       final image = img.decodeImage(bytes);
@@ -202,19 +220,43 @@ class _CameraScreenState extends State<CameraScreen>
       final optimizedBytes = img.encodeJpg(resized, quality: 85);
       final base64Image = base64Encode(optimizedBytes);
 
+      // Prepare request body with thresholds
+      final requestBody = {
+        'image_base64': base64Image,
+        'confidence_threshold': 0.25,
+        'unknown_threshold': 0.45,
+      };
+
       final response = await http.post(
         Uri.parse('https://typicalsleepingboy.my.id/api/yolo/detect'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'image_base64': base64Image}),
+        body: jsonEncode(requestBody),
       );
 
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
+
+        // Add scan start time for backward compatibility
         jsonResponse['scan_start_time'] = startTime.toIso8601String();
+        if (jsonResponse['detections'] != null) {
+          final detections = jsonResponse['detections'] as List;
+          for (var detection in detections) {
+            // Add percentage confidence for display
+            if (detection['confidence'] != null) {
+              detection['confidence_percentage'] =
+                  (detection['confidence'] * 100).toStringAsFixed(1);
+            }
+
+            if (detection['class_name'] == 'unknown') {
+              print('Unknown detection: ${detection['original_class_name']} '
+                  '(${detection['confidence_percentage']}%) - ${detection['reason']}');
+            }
+          }
+        }
+
         return jsonResponse;
       }
 
-      print('Detection failed with status: ${response.statusCode}');
       return null;
     } catch (e) {
       print('Error sending image: $e');
@@ -222,25 +264,7 @@ class _CameraScreenState extends State<CameraScreen>
     }
   }
 
-  void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Error'),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showDialog({required String title, required String message}) {
+  void _showErrorDialog({required String title, required String message}) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -257,18 +281,24 @@ class _CameraScreenState extends State<CameraScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
-                  Icons.info_outline,
+                Icon(
+                  title.contains('Error')
+                      ? Icons.error_outline
+                      : Icons.info_outline,
                   size: 48,
-                  color: Color(0xFF2cac69),
+                  color: title.contains('Error')
+                      ? Colors.red
+                      : const Color(0xFF2cac69),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF2cac69),
+                    color: title.contains('Error')
+                        ? Colors.red
+                        : const Color(0xFF2cac69),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -280,7 +310,9 @@ class _CameraScreenState extends State<CameraScreen>
                 const SizedBox(height: 24),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2cac69),
+                    backgroundColor: title.contains('Error')
+                        ? Colors.red
+                        : const Color(0xFF2cac69),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
@@ -290,7 +322,8 @@ class _CameraScreenState extends State<CameraScreen>
                     ),
                   ),
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('OK'),
+                  child:
+                      const Text('OK', style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),
@@ -342,7 +375,8 @@ class _CameraScreenState extends State<CameraScreen>
               left: 0,
               right: 0,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
@@ -357,9 +391,10 @@ class _CameraScreenState extends State<CameraScreen>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                      icon:
+                          const Icon(Icons.arrow_back_ios, color: Colors.white),
                       onPressed: () async {
-                        await _turnOffTorch(); // Ensure torch is off
+                        await _turnOffTorch();
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
@@ -388,6 +423,7 @@ class _CameraScreenState extends State<CameraScreen>
               ),
             ),
 
+            // Scanning Frame
             Center(
               child: AnimatedBuilder(
                 animation: _pulseAnimation,
@@ -444,6 +480,7 @@ class _CameraScreenState extends State<CameraScreen>
               ),
             ),
 
+            // Scan Button
             Positioned(
               bottom: 50,
               left: 0,
@@ -493,7 +530,7 @@ class _CameraScreenState extends State<CameraScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _turnOffTorch(); // Ensure torch is off when disposing
+    _turnOffTorch();
     _controller?.dispose();
     _scanAnimationController.dispose();
     _pulseAnimationController.dispose();

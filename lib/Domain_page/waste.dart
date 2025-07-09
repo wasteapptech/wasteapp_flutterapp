@@ -10,9 +10,9 @@ class WasteData {
   final int timestamp;
   final double temperature;
   final double humidity;
-  final double mq4Value; // Changed to double
-  final int distance1;
-  final int distance2;
+  final double mq4Value; 
+  final int bin1_capacity;
+  final int bin2_capacity;
   final int uptime;
 
   WasteData({
@@ -21,8 +21,8 @@ class WasteData {
     required this.temperature,
     required this.humidity,
     required this.mq4Value,
-    required this.distance1,
-    required this.distance2,
+    required this.bin1_capacity,
+    required this.bin2_capacity,
     required this.uptime,
   });
 
@@ -42,12 +42,12 @@ class WasteData {
         mq4Value: json['mq4_value'] is int
             ? (json['mq4_value'] as int).toDouble()
             : double.tryParse(json['mq4_value']?.toString() ?? '0') ?? 0.0,
-        distance1: json['distance1'] is int
-            ? json['distance1']
-            : int.tryParse(json['distance1']?.toString() ?? '0') ?? 0,
-        distance2: json['distance2'] is int
-            ? json['distance2']
-            : int.tryParse(json['distance2']?.toString() ?? '0') ?? 0,
+        bin1_capacity: json['bin1_capacity'] is int
+            ? json['bin1_capacity']
+            : int.tryParse(json['bin1_capacity']?.toString() ?? '0') ?? 0,
+        bin2_capacity: json['bin2_capacity'] is int
+            ? json['bin2_capacity']
+            : int.tryParse(json['bin2_capacity']?.toString() ?? '0') ?? 0,
         uptime: json['uptime'] is int
             ? json['uptime']
             : int.tryParse(json['uptime']?.toString() ?? '0') ?? 0,
@@ -874,9 +874,9 @@ class _WasteBinStatusState extends State<WasteBinStatus> {
     }
 
     double organicFillLevel =
-        _wasteData != null ? calculateFillLevel(_wasteData!.distance1) : 0;
+        _wasteData != null ? calculateFillLevel(_wasteData!.bin1_capacity) : 0;
     double inorganicFillLevel =
-        _wasteData != null ? calculateFillLevel(_wasteData!.distance2) : 0;
+        _wasteData != null ? calculateFillLevel(_wasteData!.bin2_capacity) : 0;
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,

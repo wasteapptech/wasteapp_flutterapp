@@ -38,6 +38,8 @@ class Detection {
   final String className;
   final double confidence;
   final int id;
+  final String? originalClassName;
+  final String? reason;
 
   Detection({
     required this.bbox,
@@ -45,6 +47,8 @@ class Detection {
     required this.className,
     required this.confidence,
     required this.id,
+    this.originalClassName,
+    this.reason,
   });
 
   factory Detection.fromJson(Map<String, dynamic> json) {
@@ -54,8 +58,12 @@ class Detection {
       className: json['class_name'],
       confidence: json['confidence'].toDouble(),
       id: json['id'],
+      originalClassName: json['original_class_name'],
+      reason: json['reason'],
     );
   }
+
+  bool get isUnknown => className == 'unknown';
 }
 
 class BoundingBox {
@@ -163,7 +171,9 @@ class _ResultScreenState extends State<ResultScreen> {
   @override
   Widget build(BuildContext context) {
     final result = DetectionResult.fromJson(widget.detectionResult);
-    final totalPrice = _calculateTotalPrice(result.detections);
+    final validDetections = result.detections.where((d) => !d.isUnknown).toList();
+    final totalPrice = _calculateTotalPrice(validDetections);
+    final unknownCount = result.detections.where((d) => d.isUnknown).length;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -189,21 +199,32 @@ class _ResultScreenState extends State<ResultScreen> {
                     width: double.infinity,
                     color: Colors.green,
                     padding: const EdgeInsets.only(bottom: 20),
-                    child: Center(
-                      child: Text(
-                        'Ditemukan ${result.detections.length} objek sampah',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
+                    child: Column(
+                      children: [
+                        Text(
+                          'Ditemukan ${validDetections.length} objek yang dapat ditabung',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
+                        if (unknownCount > 0)
+                          Text(
+                            '($unknownCount objek tidak dikenali)',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
 
                   const SizedBox(height: 20),
 
-                  // Image with bounding boxes
+                  // Image with bounding boxes (shows ALL detections)
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
@@ -228,7 +249,7 @@ class _ResultScreenState extends State<ResultScreen> {
                           Positioned.fill(
                             child: CustomPaint(
                               painter: BoundingBoxPainter(
-                                detections: result.detections,
+                                detections: result.detections, // All detections
                                 imageWidth: result.imageWidth,
                                 imageHeight: result.imageHeight,
                               ),
@@ -241,7 +262,7 @@ class _ResultScreenState extends State<ResultScreen> {
 
                   const SizedBox(height: 20),
 
-                  // Detection details
+                  // Detection details (only shows known detections)
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 16),
                     child: Column(
@@ -256,7 +277,12 @@ class _ResultScreenState extends State<ResultScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        ...result.detections.map((detection) =>
+                        if (validDetections.isEmpty)
+                          const Text(
+                            'Tidak ada objek yang dapat ditabung',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ...validDetections.map((detection) =>
                             _buildDetectionCard(detection, result)),
                       ],
                     ),
@@ -281,7 +307,7 @@ class _ResultScreenState extends State<ResultScreen> {
                                 color: Colors.green, size: 24),
                             const SizedBox(width: 8),
                             Text(
-                              'Total',
+                              'Total yang dapat ditabung',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -309,11 +335,21 @@ class _ResultScreenState extends State<ResultScreen> {
                         const SizedBox(height: 12),
                         ElevatedButton(
                           onPressed: () {
+                            if (validDetections.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Tidak ada objek yang dapat ditabung'),
+                                  backgroundColor: Colors.orange,
+                                ),
+                              );
+                              return;
+                            }
+
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => TransactionPage(
-                                  detectedItems: result.detections
+                                  detectedItems: validDetections
                                       .map((detection) => {
                                             'className': detection.className,
                                             'price': _prices?.getPriceForItem(
@@ -362,7 +398,10 @@ class _ResultScreenState extends State<ResultScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(
+          color: Colors.grey[300]!,
+          width: 1.0,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -391,6 +430,7 @@ class _ResultScreenState extends State<ResultScreen> {
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
+                    color: Colors.black,
                   ),
                 ),
                 Text(
@@ -454,9 +494,12 @@ class BoundingBoxPainter extends CustomPainter {
 
     for (var detection in detections) {
       final paint = Paint()
-        ..color = _getColorForClass(detection.classId)
+        ..color = detection.isUnknown
+            ? Colors.black // Black for unknown detections
+            : _getColorForClass(detection.classId)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 3.0;
+        ..strokeWidth = detection.isUnknown ? 2.0 : 3.0;
+      if (detection.isUnknown) paint.strokeCap = StrokeCap.butt;
 
       final rect = Rect.fromLTWH(
         detection.bbox.x1 * scaleX,
@@ -467,41 +510,43 @@ class BoundingBoxPainter extends CustomPainter {
 
       canvas.drawRect(rect, paint);
 
-      // Draw label background
-      final textPainter = TextPainter(
-        text: TextSpan(
-          text:
-              '${detection.className} ${(detection.confidence * 100).toInt()}%',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
+      // Only draw labels for known detections
+      if (!detection.isUnknown) {
+        final labelText = '${detection.className} ${(detection.confidence * 100).toInt()}%';
+
+        final textPainter = TextPainter(
+          text: TextSpan(
+            text: labelText,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ),
-        textDirection: TextDirection.ltr,
-      );
-      textPainter.layout();
+          textDirection: TextDirection.ltr,
+        );
+        textPainter.layout();
 
-      final labelRect = Rect.fromLTWH(
-        detection.bbox.x1 * scaleX,
-        detection.bbox.y1 * scaleY - textPainter.height - 4,
-        textPainter.width + 8,
-        textPainter.height + 4,
-      );
+        final labelRect = Rect.fromLTWH(
+          detection.bbox.x1 * scaleX,
+          detection.bbox.y1 * scaleY - textPainter.height - 4,
+          textPainter.width + 8,
+          textPainter.height + 4,
+        );
 
-      canvas.drawRect(
-        labelRect,
-        Paint()..color = _getColorForClass(detection.classId),
-      );
+        canvas.drawRect(
+          labelRect,
+          Paint()..color = _getColorForClass(detection.classId),
+        );
 
-      // Draw text
-      textPainter.paint(
-        canvas,
-        Offset(
-          detection.bbox.x1 * scaleX + 4,
-          detection.bbox.y1 * scaleY - textPainter.height - 2,
-        ),
-      );
+        textPainter.paint(
+          canvas,
+          Offset(
+            detection.bbox.x1 * scaleX + 4,
+            detection.bbox.y1 * scaleY - textPainter.height - 2,
+          ),
+        );
+      }
     }
   }
 
@@ -520,4 +565,3 @@ class BoundingBoxPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
- 

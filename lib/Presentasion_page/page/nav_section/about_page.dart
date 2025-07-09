@@ -146,7 +146,7 @@ class AboutPage extends StatelessWidget {
                     mainAxisSpacing: 20,
                     crossAxisSpacing: 20,
                     children: [
-                      _teamMemberCard('Ahmad syafii', 'Team Lead',
+                      _teamMemberCard('Ahmad Syafii', 'Team Lead',
                           'assets/images/feii.jpg'),
                       _teamMemberCard('Andi Muh Naufal D', 'App Developer',
                           'assets/images/naufal.jpg'),
